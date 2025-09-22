@@ -1,0 +1,324 @@
+/* ===== Base ===== */
+:root{
+  --bg:#0e1220; --bg2:#141a2a; --line:#2a3355; --text:#e7f0ff; --muted:#9fb3ff;
+  --btn:#1b2344; --btn-hover:#243060; --accent:#4aa3ff;
+  --digital-font: 'Share Tech Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+
+*{ box-sizing:border-box; }
+html,body{ height:100%; }
+body{
+  margin:0; font-family:system-ui, -apple-system, Segoe UI, Inter, Roboto, Arial, sans-serif;
+  background: radial-gradient(60% 60% at 50% 35%, #1a2240 0%, var(--bg) 65%);
+  color:var(--text);
+}
+
+/* ===== Layout ===== */
+.wrap{ min-height:100dvh; display:grid; place-items:center; padding:24px; }
+.card{
+  width:100%; max-width:720px; background:var(--bg2); border:1px solid var(--line);
+  border-radius:20px; padding:24px 20px; text-align:center;
+  box-shadow:0 12px 40px rgba(0,0,0,.35);
+}
+
+/* Home: gör cardet lite kompaktare utan att röra presale */
+body.home .card{
+  max-width:600px;
+  padding:18px 16px;
+}
+
+/* ===== Hero ===== */
+.hero{ padding:48px 16px 8px; text-align:center; }
+.hero-logo{ width:220px; height:auto; margin:0 auto 8px; display:block; }
+.hero-title{
+  margin:6px 0 0; font-size:42px; line-height:1.1; text-shadow:0 2px 4px rgba(0,0,0,.6);
+}
+
+/* Presale hero (lite större) */
+body.presale .hero-logo{
+  width:260px;
+  margin-bottom:12px;
+}
+
+/* Glow-klass för PNG-hjälte om du använder den */
+.hero-logo--screen{
+  mix-blend-mode: screen;
+  filter: brightness(1.12) contrast(1.05)
+          drop-shadow(0 0 18px rgba(0,255,120,.18))
+          drop-shadow(0 0 36px rgba(0,255,120,.10));
+}
+
+/* ===== Typography ===== */
+h1{ margin:8px 0 6px; font-size:28px; letter-spacing:.3px; }
+p{ margin:6px 0 0; color:var(--muted); }
+.small{ font-size:12px; opacity:.75; margin-top:10px; }
+
+/* Digital look på hero-titel + card-h1 */
+.hero-title,
+.card > h1{
+  font-family: var(--digital-font);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  background: linear-gradient(180deg, #e7f0ff 0%, #bcd0ff 55%, #8fb6ff 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  text-shadow: 0 0 6px rgba(74,163,255,.22);
+}
+.card > h1{ margin-top:6px; margin-bottom:4px; font-size:26px; letter-spacing:0.1em; }
+
+/* ===== Buttons ===== */
+.btn{
+  display:inline-flex; align-items:center; justify-content:center; gap:8px;
+  padding:10px 14px; border-radius:12px; border:1px solid rgba(255,255,255,.15);
+  background:var(--btn); color:#fff; font-weight:600; text-decoration:none; cursor:pointer;
+  transition:background .15s ease, transform .04s ease;
+}
+.btn:hover{ background:var(--btn-hover); }
+.btn:active{ transform:translateY(1px); }
+
+/* Icon inside buttons */
+.btn-icon .icon{
+  width:18px; height:18px; display:inline-block; vertical-align:middle;
+  filter:invert(1); opacity:.95;
+}
+.btn-icon:hover .icon{ opacity:1; }
+
+/* CTA row */
+.cta{ margin-top:16px; display:flex; gap:12px; justify-content:center; flex-wrap:wrap; }
+
+/* Logos in card vs hero */
+.logo{ width:140px; height:auto; display:block; margin:0 auto 8px; }
+
+/* ===== Floating connect pill ===== */
+.connect-pill{ position:fixed; top:16px; right:16px; z-index:1000; }
+.connect-pill .btn{ border-radius:999px; padding:8px 14px; }
+
+/* ===== Forms / selects (legacy) ===== */
+select{
+  appearance:none; -webkit-appearance:none; -moz-appearance:none;
+  background:var(--btn); color:#fff; border:1px solid rgba(255,255,255,.15);
+  padding:10px 36px 10px 12px; border-radius:12px; cursor:pointer;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='white'%3E%3Cpath d='M7 10l5 5 5-5z'/%3E%3C/svg%3E");
+  background-repeat:no-repeat; background-position:right 10px center;
+}
+.box{ background:#1b2344; border-radius:12px; padding:12px; }
+
+/* Progress bar */
+.bar{ height:10px; background:#202a4a; border-radius:999px; overflow:hidden; }
+.fill{ height:100%; width:35%; background:var(--accent); }
+
+/* Currency option with icon (placeholder for future) */
+.option{ display:flex; align-items:center; gap:8px; }
+.option img{ width:16px; height:16px; }
+
+/* ===== Old-school terminal (CRT) ===== */
+.terminal-os{
+  margin:16px auto 0;
+  padding:0 16px;
+  display:flex; justify-content:center;
+}
+.terminal-os__screen{
+  position:relative;
+  width:100%;
+  max-width:820px;
+  min-height:280px;
+  padding:16px 18px;
+  border-radius:14px;
+  border:2px solid #153015;
+  background:#081208;
+  color:#b6ffb6;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size:13.5px;
+  line-height:1.6;
+  text-shadow: 0 0 6px rgba(120,255,120,.35), 0 0 18px rgba(120,255,120,.12);
+  box-shadow: 0 0 24px rgba(40,160,60,.18) inset, 0 16px 40px rgba(0,0,0,.45);
+  overflow:hidden; /* klipper svepet exakt till skärmen */
+}
+/* scanlines + vignett */
+.terminal-os__screen::before{
+  content:""; position:absolute; inset:0; border-radius:inherit; pointer-events:none;
+  background:
+    repeating-linear-gradient(to bottom,
+      rgba(0,0,0,0) 0px,
+      rgba(0,0,0,0) 2px,
+      rgba(0,20,0,.18) 3px),
+    radial-gradient(120% 80% at 50% -10%, rgba(0,0,0,.22), rgba(0,0,0,0) 45%),
+    radial-gradient(140% 100% at 50% 120%, rgba(0,0,0,.25), rgba(0,0,0,0) 35%);
+  mix-blend-mode: multiply;
+}
+/* svep */
+.terminal-os__screen::after{
+  content:""; position:absolute; left:0; right:0; top:-15%;
+  height:30%; border-radius:inherit; pointer-events:none;
+  background: linear-gradient(to bottom, rgba(180,255,180,.10), rgba(180,255,180,0));
+  filter: blur(0.5px);
+  animation: crtSweep 4.5s linear infinite;
+  will-change: top, opacity;
+}
+@keyframes crtSweep{
+  0%{ top:-15%; opacity:.28; }
+  70%{ top:100%; opacity:.10; }
+  100%{ top:100%; opacity:0; }
+}
+/* blinkande cursor (återanvänds i terminalen) */
+.cursor{ display:inline-block; margin-left:6px; animation:blink 1s steps(1) infinite; }
+@keyframes blink { 50% { opacity:0; } }
+
+/* ===== Presale: layout cleanup ===== */
+body.presale .card{ text-align:left; max-width:780px; }
+body.presale h1,
+body.presale .card > .muted{ text-align:center; }
+
+body.presale .box{
+  background:#1a2240;
+  border:1px solid rgba(255,255,255,.06);
+  padding:16px;
+}
+body.presale .row{ gap:16px; margin:18px 0; }
+
+/* Staplad layout i betalningssektionen */
+.pay-stack{ display:flex; flex-direction:column; gap:12px; }
+
+/* Adressfält som input med Copy-knapp */
+.pay-field{ position:relative; }
+#payAddress{
+  display:block; width:100%; overflow:auto;
+  padding:10px 88px 10px 12px; border-radius:12px; background:#0f1630;
+  border:1px solid rgba(255,255,255,.12);
+  font-family: ui-monospace, Menlo, Consolas, monospace;
+}
+#copyPay{
+  position:absolute; top:6px; right:6px; height:36px; padding:0 14px; line-height:36px;
+}
+
+/* How to join */
+body.presale ol{ max-width:620px; margin:18px auto 8px; padding-left:20px; }
+body.presale ol li{ margin:10px 0; line-height:1.6; }
+body.presale ol code{ background:#0f1630; }
+
+/* Små texter lite ljusare på presale */
+body.presale .small{ opacity:.8; }
+
+/* ===== Custom dropdown (med ikoner) ===== */
+.dd{ position:relative; width:100%; max-width:360px; }
+.dd-toggle{
+  width:100%; display:flex; align-items:center; gap:10px;
+  padding:10px 12px; border-radius:12px; border:1px solid rgba(255,255,255,.12);
+  background:var(--btn); color:#fff; cursor:pointer; font-weight:600;
+}
+.dd-icon{ width:18px; height:18px; display:inline-block; }
+.dd-caret{ margin-left:auto; opacity:.8; }
+.dd-list{
+  position:absolute; top:100%; left:0; right:0; z-index:20;
+  background:#0f1630; border:1px solid rgba(255,255,255,.12); border-radius:12px;
+  margin-top:6px; padding:6px; box-shadow:0 12px 32px rgba(0,0,0,.45);
+  max-height:260px; overflow:auto; display:none;
+}
+.dd.open .dd-list{ display:block; }
+.dd-item{
+  width:100%; display:flex; align-items:center; gap:10px;
+  padding:10px 10px; border-radius:10px; background:transparent; color:#e7f0ff;
+  border:none; text-align:left; cursor:pointer;
+}
+.dd-item:hover{ background:#182046; }
+.dd-item img{ width:18px; height:18px; }
+
+/* ===== Responsive ===== */
+@media (max-width:600px){
+  .hero{ padding-top:32px; }
+  .hero-title{ font-size:32px; }
+  .card{ padding:20px 16px; }
+  .cta{ gap:10px; }
+  .btn{ width:100%; max-width:320px; }
+  .connect-pill{ top:12px; right:12px; }
+  /* Gör dropdowns fullbredd på mobil */
+  .dd{ max-width:100%; }
+}
+
+/* === Presale: strama upp payment-sektionen === */
+
+/* Håll allt inom en bekväm kolumn */
+.pay-stack{ max-width:640px; margin:0 auto; }
+
+/* Gör valutan “lagom” bred */
+.dd{ max-width:320px; }                 /* var 360px */
+
+/* Adressfält: samma kolumnbredd + snygg Copy-placering */
+.pay-field{ max-width:640px; margin-top:6px; position:relative; }
+#payAddress{
+  font-size:13px; line-height:1.4;
+  padding:10px 88px 10px 12px;
+}
+#copyPay{
+  position:absolute; right:6px; top:50%; transform:translateY(-50%);
+  height:34px; line-height:34px; padding:0 12px;
+}
+
+/* “How to join”: mer luft + snyggare baseline */
+body.presale ol{ max-width:640px; margin:18px auto 8px; padding-left:20px; }
+body.presale ol li{ margin:14px 0; line-height:1.65; }
+body.presale ol .btn,
+body.presale ol code{ vertical-align:middle; }
+
+/* (Om du vill låta CTA på rad 2 bryta till ny rad på mobil) */
+@media (max-width:560px){
+  body.presale ol li{ margin:16px 0; }
+  body.presale ol a.btn{ display:inline-block; margin-top:6px; }
+}
+
+/* === Index: terminal – texten ska börja uppe till vänster === */
+.terminal-os__screen{ text-align:left; }        /* säkerställ vänster */
+.terminal-os__screen .type{ display:inline; }   /* ingen centrerande blocklayout */
+
+/* Smalare payment-kolumn, dropdown och adressfält */
+body.presale .pay-stack{ max-width:600px; margin:0 auto; }
+body.presale .box .dd{ max-width:300px; }
+body.presale .box .pay-field{ max-width:600px; margin:6px auto 0; }
+body.presale #payAddress{ text-overflow:ellipsis; white-space:nowrap; overflow:hidden; max-width: 400px;}
+
+/* Presale: vänsterställd kolumn + smal dropdown */
+body.presale .pay-stack{
+  max-width:600px;
+  margin-left:0;         /* vänster */
+  margin-right:auto;     /* inte centrerad */
+}
+
+body.presale .box .dd{
+  display:inline-block;  /* sluta sträcka 100% */
+  width:auto;            /* override tidigare width:100% */
+  max-width:300px;
+}
+
+body.presale .box .pay-field{
+  max-width:600px;
+  margin:6px 0 0 0;      /* vänster, inte auto-centrerad */
+}
+
+/* Kill the unnecessary scroll in the currency dropdown */
+body.presale .dd .dd-list{
+  max-height: none;      /* no clamp = no scroll for 6 items */
+  overflow-y: visible;
+}
+
+/* Safety on very small screens: allow scrolling if needed */
+@media (max-height: 540px){
+  body.presale .dd .dd-list{
+    max-height: 60vh;
+    overflow-y: auto;
+  }
+}
+
+@media (max-width: 600px){
+  .wrap{ padding:16px; }
+  body.presale .card{ max-width:100%; margin:0; border-radius:14px; }
+  body.presale .row{ flex-direction:column; }
+  body.presale .box{ padding:14px; }
+  /* payment-kolumn fullbredd på mobil */
+  body.presale .pay-stack{ max-width:100% !important; }
+  body.presale .box .dd{ width:100% !important; max-width:100% !important; }
+  body.presale .box .pay-field{ max-width:100% !important; }
+  body.presale #payAddress{ width:100% !important; }
+}
+

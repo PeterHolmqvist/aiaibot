@@ -1,0 +1,13 @@
+# Netlify / web
+web/node_modules/
+web/dist/
+web/.env
+
+# Anchor / Rust
+onchain/target/
+onchain/.anchor/
+**/Cargo.lock        # (optional; or keep if you want exact deps)
+
+# Keys (very important)
+**/id.json
+**/*-keypair.json

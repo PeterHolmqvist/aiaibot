@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>AiAiBot — Presale</title>
+  <link rel="stylesheet" href="./style.css">
+  <script defer src="https://unpkg.com/@solana/web3.js@1.95.3/lib/index.iife.min.js"></script>
+
+  <style>
+    body{margin:0;background:#0e1220;color:#e7f0ff;font-family:Inter,system-ui,Arial}
+    .wrap{min-height:100dvh;display:grid;place-items:center;padding:24px}
+    .card{max-width:720px;width:100%;background:#141a2a;border:1px solid #2a3355;border-radius:20px;padding:24px 20px}
+    h1{margin:0 0 8px;font-size:28px} .muted{color:#9fb3ff}
+    .row{display:flex;flex-wrap:wrap;gap:12px;margin:14px 0}
+    .box{flex:1 1 180px;background:#1b2344;border-radius:12px;padding:12px}
+    .btn{display:inline-block;padding:10px 14px;border-radius:12px;background:#243060;color:#fff;text-decoration:none;font-weight:600}
+    .btn:hover{background:#2e3a78}
+    .bar{height:10px;background:#202a4a;border-radius:999px;overflow:hidden}
+    .fill{height:100%;width:35%;background:#4aa3ff}
+    code{background:#0e1530;padding:6px 8px;border-radius:10px;display:inline-block}
+    .small{font-size:12px;opacity:.7;margin-top:8px}
+    .back{position:fixed;top:12px;left:12px;color:#9fb3ff;text-decoration:none}
+  </style>
+</head>
+<body class="presale">
+>
+    <!-- Global top-right connect pill -->
+<div style="position:fixed; top:16px; right:16px; z-index:1000;">
+  <button class="btn" id="connectPill">Connect</button>
+</div>
+  <!-- Hero image -->
+<section class="hero hero-glow-wrap">
+  <img src="assets/cash_logo.png" alt="AiAi Presale" class="hero-logo">
+</section>
+
+
+
+  <a class="back" href="/">← Home</a>
+  <div class="wrap">
+    <main class="card">
+        
+      <h1>AiAiBot Presale</h1>
+      <div class="muted">Ends in: <span id="timer">--:--:--</span></div>
+
+      <div class="row">
+        <div class="box">
+          <div class="muted">Raised</div>
+          <div><b id="raised">0</b> / <b id="target">800</b> SOL</div>
+          <div class="bar"><div class="fill" id="fill"></div></div>
+        </div>
+        <div class="box">
+          <div class="muted">Price</div><div>$0.001 / $AIAI</div>
+          <div class="muted small">Min 0.2 SOL • Max 2 SOL</div>
+        </div>
+      </div>
+      <!-- PAYMENT SELECTOR -->
+<div class="box" style="margin:14px 0;">
+  <div class="muted" style="margin-bottom:8px">Choose currency / network</div>
+
+  <!-- Currency dropdown -->
+  <div class="dd" id="ddCurrency">
+    <button class="dd-toggle" type="button">
+      <img class="dd-icon" src="assets/sol.svg" alt="">
+      <span class="dd-label">SOL (Solana)</span>
+      <span class="dd-caret">▾</span>
+    </button>
+    <div class="dd-list">
+      <button class="dd-item" data-value="SOL"><img src="assets/sol.svg" alt=""><span>SOL (Solana)</span></button>
+      <button class="dd-item" data-value="ETH"><img src="assets/eth.svg" alt=""><span>ETH (Ethereum)</span></button>
+      <button class="dd-item" data-value="BNB"><img src="assets/bnb.svg" alt=""><span>BNB (BSC)</span></button>
+      <button class="dd-item" data-value="POLYGON"><img src="assets/polygon.svg" alt=""><span>POL (Polygon)</span></button>
+      <button class="dd-item" data-value="BTC"><img src="assets/btc.svg" alt=""><span>BTC (Bitcoin)</span></button>
+      <button class="dd-item" data-value="USDT"><img src="assets/usdt.svg" alt=""><span>USDT</span></button>
+    </div>
+  </div>
+
+  <!-- USDT network dropdown (visas bara när USDT valt) -->
+  <div class="dd" id="ddUsdt" style="display:none; margin-top:10px;">
+    <button class="dd-toggle" type="button">
+      <img class="dd-icon" src="assets/usdt.svg" alt="">
+      <span class="dd-label">USDT on Ethereum (ERC-20)</span>
+      <span class="dd-caret">▾</span>
+    </button>
+    <div class="dd-list">
+      <button class="dd-item" data-value="ERC20"><img src="assets/usdt.svg" alt=""><span>USDT on Ethereum (ERC-20)</span></button>
+      <button class="dd-item" data-value="SPL"><img src="assets/usdt.svg" alt=""><span>USDT on Solana (SPL)</span></button>
+      <button class="dd-item" data-value="BEP20"><img src="assets/usdt.svg" alt=""><span>USDT on BNB (BEP-20)</span></button>
+      <button class="dd-item" data-value="POLYGON"><img src="assets/usdt.svg" alt=""><span>USDT on Polygon</span></button>
+    </div>
+  </div>
+
+  <!-- Address output -->
+  <div style="margin-top:14px">
+    <div class="muted">Send <span id="payLabel">SOL (Solana)</span> to:</div>
+    <div class="pay-field">
+      <code id="payAddress">YOUR_SOL_ADDRESS</code>
+      <a class="btn" href="#" id="copyPay">Copy</a>
+    </div>
+    <div class="small" id="networkHint">Tip: connect your wallet to auto-select the right network.</div>
+  </div>
+</div>
+<!-- Amount (only SOL) -->
+<div class="box" id="amountBox" style="margin-top:12px; display:none;">
+  <div class="muted" style="margin-bottom:6px">Amount (SOL)</div>
+  <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
+    <input id="amountInput" type="number" step="0.01" min="0.2" max="2.0"
+           placeholder="0.2 – 2.0"
+           style="flex:0 0 140px; padding:10px 12px; border-radius:12px; border:1px solid rgba(255,255,255,.12); background:#0f1630; color:#fff;">
+    <button class="btn" id="maxBtn" type="button">Max (2.0)</button>
+    <div class="small">≈ <b id="estTokens">—</b> $AIAI</div>
+  </div>
+  <div class="small" id="amtHint">Min 0.2 SOL • Max 2.0 SOL</div>
+</div>
+<!-- Pay button (SOL only) -->
+<div id="payActions" style="margin-top:10px; display:none;">
+  <button class="btn" id="payWithSol">Pay with wallet (SOL)</button>
+  <div class="small" id="payStatus"></div>
+</div>
+
+
+      <h3>How to join</h3>
+<ol>
+  <li>
+    <b>SOL users:</b> Connect wallet → choose amount (0.2–2 SOL) → click 
+    <span style="white-space:nowrap;">“Pay with wallet (SOL)”</span>.
+  </li>
+  <li>
+    <b>Other currencies:</b> Select from the dropdown, copy the address, and send manually.
+  </li>
+  <li>
+    After sending, fill the 
+    <a class="btn" href="https://docs.google.com/forms/d/e/1FAIpQLSc3wAA_JrDGh_K_x4xmHppimsOH1CTF7ndfWm4OxTdeG29oxQ/viewform?usp=header" target="_blank">
+      Google Form
+    </a>
+  </li>
+  <li>
+    Tokens are airdropped within 24–48h after presale closes.
+  </li>
+</ol>
+<p class="small">⚠ Only send to the address on this page. Wrong address = funds lost. No DMs.</p>
+
+    </main>
+  </div>
+
+
+  <script src="./script.js"></script>
+</body>
+
+</html>
+
+
