@@ -1,0 +1,14 @@
+{
+  "name": "Anchor Dev",
+  "image": "solanafoundation/anchor:v0.31.1",
+  "workspaceFolder": "/workspaces/${localWorkspaceFolderBasename}/onchain",
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "rust-lang.rust-analyzer",
+        "tamasfe.even-better-toml"
+      ]
+    }
+  },
+  "postCreateCommand": "anchor --version && solana --version && rustc --version && cargo-build-sbf --version"
+}

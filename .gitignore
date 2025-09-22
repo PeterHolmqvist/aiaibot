@@ -11,3 +11,28 @@ onchain/.anchor/
 # Keys (very important)
 **/id.json
 **/*-keypair.json
+# OS / editors
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Frontend (if you later add tooling)
+node_modules/
+dist/
+build/
+
+# Anchor / Rust
+onchain/target/
+onchain/.anchor/
+onchain/**/target/
+onchain/**/node_modules/
+
+# 🔑 NEVER commit keys
+**/id.json
+**/*-keypair.json
+
+# Misc
+.env
+.vscode/*
+!.vscode/tasks.json

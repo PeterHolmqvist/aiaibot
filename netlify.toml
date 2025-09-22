@@ -1,0 +1,21 @@
+[build]
+  command = ""
+  publish = "."
+
+# If the commit changes ONLY files under /onchain, skip deploy
+[build.processing]
+  skip_processing = false
+
+[build.environment]
+  # add vars later if needed
+
+[functions]
+  node_bundler = "esbuild"
+
+[context.production]
+  # Skip build when only /onchain changes (no web changes)
+  # Exit 0 (skip) when diff is empty for everything except /onchain
+  # Netlify runs this; if it returns 0, it skips the build.
+  # If unsure, you can delete this whole [context.production] block.
+  command = ""
+  ignore = "git diff --quiet HEAD^ HEAD -- . ':!onchain/**'"
