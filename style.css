@@ -1,101 +1,93 @@
-/* ===== Base ===== */
+/* ───────── Base / Theme ───────── */
 :root{
-  --bg:#0e1220; --bg2:#141a2a; --line:#2a3355; --text:#e7f0ff; --muted:#9fb3ff;
+  --bg:#0e1220; --bg2:#141a2a; --line:#2a3355; --ink:#e7f0ff; --muted:#9fb3ff;
   --btn:#1b2344; --btn-hover:#243060; --accent:#4aa3ff;
-  --digital-font: 'Share Tech Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  --chip:#1b2344; --bar:#202a4a; --fill:#4aa3ff;
+  --digital: 'Share Tech Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
 }
 
 *{ box-sizing:border-box; }
-html,body{ height:100%; }
+html,body{ height:100%; max-width:100%; overflow-x:hidden; -webkit-text-size-adjust:100%; }
 body{
-  margin:0; font-family:system-ui, -apple-system, Segoe UI, Inter, Roboto, Arial, sans-serif;
+  margin:0;
+  font-family:system-ui,-apple-system,Segoe UI,Inter,Roboto,Arial,sans-serif;
   background: radial-gradient(60% 60% at 50% 35%, #1a2240 0%, var(--bg) 65%);
-  color:var(--text);
+  color:var(--ink);
+  font-size:16px;
 }
 
-/* ===== Layout ===== */
+/* ───────── Layout ───────── */
 .wrap{ min-height:100dvh; display:grid; place-items:center; padding:24px; }
+.page,.container{ width:min(100%,960px); margin-inline:auto; padding-inline:16px; }
+
 .card{
-  width:100%; max-width:720px; background:var(--bg2); border:1px solid var(--line);
-  border-radius:20px; padding:24px 20px; text-align:center;
+  width:100%; max-width:720px;
+  background:var(--bg2);
+  border:1px solid var(--line);
+  border-radius:20px;
+  padding:24px 20px;
+  text-align:center;
   box-shadow:0 12px 40px rgba(0,0,0,.35);
 }
 
-/* Home: gör cardet lite kompaktare utan att röra presale */
-body.home .card{
-  max-width:600px;
-  padding:18px 16px;
-}
+/* Home card a bit tighter */
+body.home .card{ max-width:600px; padding:18px 16px; }
 
-/* ===== Hero ===== */
+/* ───────── Hero / Type ───────── */
 .hero{ padding:48px 16px 8px; text-align:center; }
 .hero-logo{ width:220px; height:auto; margin:0 auto 8px; display:block; }
-.hero-title{
-  margin:6px 0 0; font-size:42px; line-height:1.1; text-shadow:0 2px 4px rgba(0,0,0,.6);
-}
+body.presale .hero-logo{ width:260px; margin-bottom:12px; }
 
-/* Presale hero (lite större) */
-body.presale .hero-logo{
-  width:260px;
-  margin-bottom:12px;
+.hero-title,
+.card > h1{
+  margin:6px 0 0;
+  font-family:var(--digital); font-weight:700; letter-spacing:.08em; text-transform:uppercase;
+  background:linear-gradient(180deg,#e7f0ff 0%,#bcd0ff 55%,#8fb6ff 100%);
+  -webkit-background-clip:text; background-clip:text; color:transparent;
+  text-shadow:0 0 6px rgba(74,163,255,.22);
 }
+.hero-title{ font-size:42px; line-height:1.1; text-shadow:0 2px 4px rgba(0,0,0,.6); }
+.card > h1{ margin-top:6px; margin-bottom:4px; font-size:26px; letter-spacing:.1em; }
 
-/* Glow-klass för PNG-hjälte om du använder den */
+h1{ margin:8px 0 6px; font-size:28px; }
+p{ margin:6px 0 0; color:var(--muted); }
+.small{ font-size:12px; opacity:.75; margin-top:10px; }
+
+/* Optional glow for PNG logo */
 .hero-logo--screen{
-  mix-blend-mode: screen;
-  filter: brightness(1.12) contrast(1.05)
+  mix-blend-mode:screen;
+  filter:brightness(1.12) contrast(1.05)
           drop-shadow(0 0 18px rgba(0,255,120,.18))
           drop-shadow(0 0 36px rgba(0,255,120,.10));
 }
 
-/* ===== Typography ===== */
-h1{ margin:8px 0 6px; font-size:28px; letter-spacing:.3px; }
-p{ margin:6px 0 0; color:var(--muted); }
-.small{ font-size:12px; opacity:.75; margin-top:10px; }
-
-/* Digital look på hero-titel + card-h1 */
-.hero-title,
-.card > h1{
-  font-family: var(--digital-font);
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  background: linear-gradient(180deg, #e7f0ff 0%, #bcd0ff 55%, #8fb6ff 100%);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-  text-shadow: 0 0 6px rgba(74,163,255,.22);
-}
-.card > h1{ margin-top:6px; margin-bottom:4px; font-size:26px; letter-spacing:0.1em; }
-
-/* ===== Buttons ===== */
-.btn{
+/* ───────── Buttons ───────── */
+.btn, button{
   display:inline-flex; align-items:center; justify-content:center; gap:8px;
-  padding:10px 14px; border-radius:12px; border:1px solid rgba(255,255,255,.15);
+  padding:12px 16px; min-height:48px;
+  border-radius:12px; border:1px solid rgba(255,255,255,.15);
   background:var(--btn); color:#fff; font-weight:600; text-decoration:none; cursor:pointer;
   transition:background .15s ease, transform .04s ease;
 }
-.btn:hover{ background:var(--btn-hover); }
-.btn:active{ transform:translateY(1px); }
+.btn:hover, button:hover{ background:var(--btn-hover); }
+.btn:active, button:active{ transform:translateY(1px); }
 
-/* Icon inside buttons */
-.btn-icon .icon{
-  width:18px; height:18px; display:inline-block; vertical-align:middle;
-  filter:invert(1); opacity:.95;
-}
+.btn-icon .icon{ width:18px; height:18px; filter:invert(1); opacity:.95; }
 .btn-icon:hover .icon{ opacity:1; }
 
-/* CTA row */
 .cta{ margin-top:16px; display:flex; gap:12px; justify-content:center; flex-wrap:wrap; }
 
-/* Logos in card vs hero */
+/* Connect pill – NOT sticky anymore */
+.connect-pill{ position:static; margin:0 auto 12px; }
+
+/* ───────── Utilities / blocks ───────── */
 .logo{ width:140px; height:auto; display:block; margin:0 auto 8px; }
+.row{ display:flex; flex-wrap:wrap; gap:12px; margin:14px 0; }
+.box{ background:var(--chip); border-radius:12px; padding:12px; flex:1 1 180px; min-width:180px; }
 
-/* ===== Floating connect pill ===== */
-.connect-pill{ position:fixed; top:16px; right:16px; z-index:1000; }
-.connect-pill .btn{ border-radius:999px; padding:8px 14px; }
+.bar{ height:10px; background:var(--bar); border-radius:999px; overflow:hidden; }
+.fill{ height:100%; width:35%; background:var(--fill); }
 
-/* ===== Forms / selects (legacy) ===== */
 select{
   appearance:none; -webkit-appearance:none; -moz-appearance:none;
   background:var(--btn); color:#fff; border:1px solid rgba(255,255,255,.15);
@@ -103,73 +95,42 @@ select{
   background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='white'%3E%3Cpath d='M7 10l5 5 5-5z'/%3E%3C/svg%3E");
   background-repeat:no-repeat; background-position:right 10px center;
 }
-.box{ background:#1b2344; border-radius:12px; padding:12px; }
 
-/* Progress bar */
-.bar{ height:10px; background:#202a4a; border-radius:999px; overflow:hidden; }
-.fill{ height:100%; width:35%; background:var(--accent); }
-
-/* Currency option with icon (placeholder for future) */
-.option{ display:flex; align-items:center; gap:8px; }
-.option img{ width:16px; height:16px; }
-
-/* ===== Old-school terminal (CRT) ===== */
-.terminal-os{
-  margin:16px auto 0;
-  padding:0 16px;
-  display:flex; justify-content:center;
-}
+/* ───────── Old-school terminal ───────── */
+.terminal-os{ margin:16px auto 0; padding:0 16px; display:flex; justify-content:center; }
 .terminal-os__screen{
-  position:relative;
-  width:100%;
-  max-width:820px;
-  min-height:280px;
-  padding:16px 18px;
-  border-radius:14px;
-  border:2px solid #153015;
-  background:#081208;
-  color:#b6ffb6;
-  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-  font-size:13.5px;
-  line-height:1.6;
-  text-shadow: 0 0 6px rgba(120,255,120,.35), 0 0 18px rgba(120,255,120,.12);
-  box-shadow: 0 0 24px rgba(40,160,60,.18) inset, 0 16px 40px rgba(0,0,0,.45);
-  overflow:hidden; /* klipper svepet exakt till skärmen */
+  position:relative; width:100%; max-width:820px; min-height:280px;
+  padding:16px 18px; border-radius:14px; border:2px solid #153015;
+  background:#081208; color:#b6ffb6; text-align:left;
+  font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  font-size:13.5px; line-height:1.6;
+  text-shadow:0 0 6px rgba(120,255,120,.35), 0 0 18px rgba(120,255,120,.12);
+  box-shadow:0 0 24px rgba(40,160,60,.18) inset, 0 16px 40px rgba(0,0,0,.45);
+  overflow:hidden;
 }
-/* scanlines + vignett */
+.terminal-os__screen .type{ display:inline; }
 .terminal-os__screen::before{
   content:""; position:absolute; inset:0; border-radius:inherit; pointer-events:none;
   background:
-    repeating-linear-gradient(to bottom,
-      rgba(0,0,0,0) 0px,
-      rgba(0,0,0,0) 2px,
-      rgba(0,20,0,.18) 3px),
+    repeating-linear-gradient(to bottom, rgba(0,0,0,0) 0px, rgba(0,0,0,0) 2px, rgba(0,20,0,.18) 3px),
     radial-gradient(120% 80% at 50% -10%, rgba(0,0,0,.22), rgba(0,0,0,0) 45%),
     radial-gradient(140% 100% at 50% 120%, rgba(0,0,0,.25), rgba(0,0,0,0) 35%);
-  mix-blend-mode: multiply;
+  mix-blend-mode:multiply;
 }
-/* svep */
 .terminal-os__screen::after{
-  content:""; position:absolute; left:0; right:0; top:-15%;
-  height:30%; border-radius:inherit; pointer-events:none;
-  background: linear-gradient(to bottom, rgba(180,255,180,.10), rgba(180,255,180,0));
-  filter: blur(0.5px);
-  animation: crtSweep 4.5s linear infinite;
-  will-change: top, opacity;
+  content:""; position:absolute; left:0; right:0; top:-15%; height:30%;
+  border-radius:inherit; pointer-events:none;
+  background:linear-gradient(to bottom, rgba(180,255,180,.10), rgba(180,255,180,0));
+  filter:blur(.5px); animation:crtSweep 4.5s linear infinite; will-change:top,opacity;
 }
-@keyframes crtSweep{
-  0%{ top:-15%; opacity:.28; }
-  70%{ top:100%; opacity:.10; }
-  100%{ top:100%; opacity:0; }
-}
-/* blinkande cursor (återanvänds i terminalen) */
+@keyframes crtSweep{ 0%{top:-15%;opacity:.28} 70%{top:100%;opacity:.10} 100%{top:100%;opacity:0} }
 .cursor{ display:inline-block; margin-left:6px; animation:blink 1s steps(1) infinite; }
-@keyframes blink { 50% { opacity:0; } }
+@keyframes blink{ 50%{ opacity:0 } }
 
-/* ===== Presale: layout cleanup ===== */
+/* ───────── Presale: layout / UX ───────── */
 body.presale .card{ text-align:left; max-width:780px; }
-body.presale h1,
-body.presale .card > .muted{ text-align:center; }
+body.presale h1, body.presale .card > .muted{ text-align:center; }
+body.presale .small{ opacity:.8; }
 
 body.presale .box{
   background:#1a2240;
@@ -178,43 +139,37 @@ body.presale .box{
 }
 body.presale .row{ gap:16px; margin:18px 0; }
 
-/* Staplad layout i betalningssektionen */
-.pay-stack{ display:flex; flex-direction:column; gap:12px; }
-
-/* Adressfält som input med Copy-knapp */
-.pay-field{ position:relative; }
+/* Payment column */
+.pay-stack{ display:flex; flex-direction:column; gap:12px; max-width:640px; margin:0 auto; }
+.pay-field{ position:relative; max-width:640px; margin-top:6px; }
 #payAddress{
   display:block; width:100%; overflow:auto;
   padding:10px 88px 10px 12px; border-radius:12px; background:#0f1630;
   border:1px solid rgba(255,255,255,.12);
-  font-family: ui-monospace, Menlo, Consolas, monospace;
+  font-family:ui-monospace,Menlo,Consolas,monospace; font-size:13px; line-height:1.4;
+  text-overflow:ellipsis; white-space:nowrap;
 }
-#copyPay{
-  position:absolute; top:6px; right:6px; height:36px; padding:0 14px; line-height:36px;
-}
+#copyPay{ position:absolute; right:6px; top:50%; transform:translateY(-50%); height:34px; line-height:34px; padding:0 12px; }
 
 /* How to join */
-body.presale ol{ max-width:620px; margin:18px auto 8px; padding-left:20px; }
-body.presale ol li{ margin:10px 0; line-height:1.6; }
+body.presale ol{ max-width:640px; margin:18px auto 8px; padding-left:20px; }
+body.presale ol li{ margin:14px 0; line-height:1.65; }
 body.presale ol code{ background:#0f1630; }
 
-/* Små texter lite ljusare på presale */
-body.presale .small{ opacity:.8; }
-
-/* ===== Custom dropdown (med ikoner) ===== */
-.dd{ position:relative; width:100%; max-width:360px; }
+/* Custom currency dropdown */
+.dd{ position:relative; width:100%; max-width:320px; }
 .dd-toggle{
   width:100%; display:flex; align-items:center; gap:10px;
   padding:10px 12px; border-radius:12px; border:1px solid rgba(255,255,255,.12);
   background:var(--btn); color:#fff; cursor:pointer; font-weight:600;
 }
-.dd-icon{ width:18px; height:18px; display:inline-block; }
+.dd-icon{ width:18px; height:18px; }
 .dd-caret{ margin-left:auto; opacity:.8; }
 .dd-list{
   position:absolute; top:100%; left:0; right:0; z-index:20;
   background:#0f1630; border:1px solid rgba(255,255,255,.12); border-radius:12px;
   margin-top:6px; padding:6px; box-shadow:0 12px 32px rgba(0,0,0,.45);
-  max-height:260px; overflow:auto; display:none;
+  display:none;
 }
 .dd.open .dd-list{ display:block; }
 .dd-item{
@@ -225,262 +180,124 @@ body.presale .small{ opacity:.8; }
 .dd-item:hover{ background:#182046; }
 .dd-item img{ width:18px; height:18px; }
 
-/* ===== Responsive ===== */
+/* ───────── Responsive ───────── */
 @media (max-width:600px){
+  .wrap{ padding:16px; }
+  .card{ padding:20px 16px; border-radius:14px; }
   .hero{ padding-top:32px; }
   .hero-title{ font-size:32px; }
-  .card{ padding:20px 16px; }
   .cta{ gap:10px; }
-  .btn{ width:100%; max-width:320px; }
-  .connect-pill{ top:12px; right:12px; }
-  /* Gör dropdowns fullbredd på mobil */
-  .dd{ max-width:100%; }
-}
 
-/* === Presale: strama upp payment-sektionen === */
-
-/* Håll allt inom en bekväm kolumn */
-.pay-stack{ max-width:640px; margin:0 auto; }
-
-/* Gör valutan “lagom” bred */
-.dd{ max-width:320px; }                 /* var 360px */
-
-/* Adressfält: samma kolumnbredd + snygg Copy-placering */
-.pay-field{ max-width:640px; margin-top:6px; position:relative; }
-#payAddress{
-  font-size:13px; line-height:1.4;
-  padding:10px 88px 10px 12px;
-}
-#copyPay{
-  position:absolute; right:6px; top:50%; transform:translateY(-50%);
-  height:34px; line-height:34px; padding:0 12px;
-}
-
-/* “How to join”: mer luft + snyggare baseline */
-body.presale ol{ max-width:640px; margin:18px auto 8px; padding-left:20px; }
-body.presale ol li{ margin:14px 0; line-height:1.65; }
-body.presale ol .btn,
-body.presale ol code{ vertical-align:middle; }
-
-/* (Om du vill låta CTA på rad 2 bryta till ny rad på mobil) */
-@media (max-width:560px){
-  body.presale ol li{ margin:16px 0; }
-  body.presale ol a.btn{ display:inline-block; margin-top:6px; }
-}
-
-/* === Index: terminal – texten ska börja uppe till vänster === */
-.terminal-os__screen{ text-align:left; }        /* säkerställ vänster */
-.terminal-os__screen .type{ display:inline; }   /* ingen centrerande blocklayout */
-
-/* Smalare payment-kolumn, dropdown och adressfält */
-body.presale .pay-stack{ max-width:600px; margin:0 auto; }
-body.presale .box .dd{ max-width:300px; }
-body.presale .box .pay-field{ max-width:600px; margin:6px auto 0; }
-body.presale #payAddress{ text-overflow:ellipsis; white-space:nowrap; overflow:hidden; max-width: 400px;}
-
-/* Presale: vänsterställd kolumn + smal dropdown */
-body.presale .pay-stack{
-  max-width:600px;
-  margin-left:0;         /* vänster */
-  margin-right:auto;     /* inte centrerad */
-}
-
-body.presale .box .dd{
-  display:inline-block;  /* sluta sträcka 100% */
-  width:auto;            /* override tidigare width:100% */
-  max-width:300px;
-}
-
-body.presale .box .pay-field{
-  max-width:600px;
-  margin:6px 0 0 0;      /* vänster, inte auto-centrerad */
-}
-
-/* Kill the unnecessary scroll in the currency dropdown */
-body.presale .dd .dd-list{
-  max-height: none;      /* no clamp = no scroll for 6 items */
-  overflow-y: visible;
-}
-
-/* Safety on very small screens: allow scrolling if needed */
-@media (max-height: 540px){
-  body.presale .dd .dd-list{
-    max-height: 60vh;
-    overflow-y: auto;
-  }
-}
-
-@media (max-width: 600px){
-  .wrap{ padding:16px; }
-  body.presale .card{ max-width:100%; margin:0; border-radius:14px; }
+  /* Presale: stack & full width inputs/buttons */
   body.presale .row{ flex-direction:column; }
   body.presale .box{ padding:14px; }
-  /* payment-kolumn fullbredd på mobil */
   body.presale .pay-stack{ max-width:100% !important; }
-  body.presale .box .dd{ width:100% !important; max-width:100% !important; }
-  body.presale .box .pay-field{ max-width:100% !important; }
-  body.presale #payAddress{ width:100% !important; }
+  body.presale .box .dd,
+  body.presale .box .pay-field,
+  #payAddress{ width:100% !important; max-width:100% !important; }
 }
 
-/* ===== Mobile polish ===== */
-* { box-sizing: border-box; }
-
-html, body {
-  max-width: 100%;
-  overflow-x: hidden;           /* kill sideways scroll */
-  -webkit-text-size-adjust: 100%;
+@media (max-width:480px){
+  h1{ font-size:clamp(22px,6vw,28px); }
+  .row{ gap:12px; }
+  .box{ flex:1 1 100%; min-width:0; } /* boxes stack */
+  .btn, button{ width:100%; }          /* full-width CTAs only on phones */
+  #connectPill { width: auto !important; }
 }
 
-/* Keep base readable on iOS so it won’t auto-zoom inputs */
-body, input, select, button { font-size: 16px; }
+/* ========== Patch: layout fixes ========== */
 
-/* Layout container */
-.container, .wrap, .page {
-  width: min(100%, 960px);
-  margin-inline: auto;
-  padding-inline: 16px;
-}
-
-/* Cards */
-.card {
-  border-radius: 16px;
-  padding: 16px;
-  gap: 12px;
-}
-
-/* Buttons (consistent look + tap target) */
-.btn, button, .cta {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 100%;                   /* full width on mobile */
-  min-height: 48px;              /* thumb-friendly */
-  padding: 12px 16px;
-  border-radius: 12px;
-  font-weight: 600;
-  line-height: 1.1;
-  text-align: center;
-}
-
-/* Compact pills (wallet address / copy) */
-.pill, .address-pill {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 10px 12px;
-  border-radius: 12px;
-  min-height: 44px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-/* Inputs */
-input[type="number"], input, select {
-  width: 100%;
-  min-height: 48px;
-  padding: 10px 12px;
-  border-radius: 10px;
-}
-
-/* Icon row spacing */
-.row, .grid, .stack { gap: 12px; }
-
-/* Don’t let large hero images blow the layout */
+/* 1) Keep everything inside the page on mobile (no sideways scroll) */
+.wrap, .card { overflow-x: hidden; }
 img, svg, video { max-width: 100%; height: auto; }
 
-/* ===== Small screens ===== */
-@media (max-width: 480px) {
-  h1 { font-size: clamp(22px, 6vw, 28px); }
-  h2 { font-size: clamp(18px, 5vw, 22px); }
-  p  { font-size: 15.5px; }
+/* 2) Home link: pin truly top-left */
+.back{
+  position: fixed !important;
+  top: 12px; left: 12px;
+  z-index: 1002;
+  color: white;
+}
 
-  .grid-2, .cols-2 {
-    display: grid;
-    grid-template-columns: 1fr; /* stack columns */
-    gap: 16px;
+/* 3) Connect pill: tidy in the card header (desktop), not glued to frame */
+.card{ position: relative; }
+.connect-pill{
+  position: static !important;    /* sits inside the card */
+  top: 12px; right: 16px;
+  margin: 0;
+}
+@media (max-width: 600px){
+  .connect-pill{
+    position: static !important ;   /* normal flow on mobile */
+    margin: 0 0 12px 0;
+    align-self: stretch;
   }
-
-  .card { padding: 14px; }
-  .section { padding-block: 16px; }
-
-  /* Make the big “Pay with wallet” button fixed at bottom (optional) */
-  .sticky-cta {
-    position: sticky;
-    bottom: calc(env(safe-area-inset-bottom, 0) + 12px);
-    z-index: 20;
-  }
 }
 
-/* iOS safe area */
-.footer, .sticky-cta {
-  padding-bottom: calc(env(safe-area-inset-bottom, 0) + 12px);
+/* 4) Currency dropdown: left-aligned, not too wide */
+.dd{ width: auto; max-width: 320px; }
+.dd-list{
+  left: 0; right: auto;                 /* anchor to left edge */
+  width: max-content;                   /* size to content, but... */
+  min-width: 100%;                      /* ...never narrower than toggle */
+  max-width: min(320px, 92vw);          /* ...and never overflow viewport */
+  text-align: left;
+}
+.dd-item{
+  justify-content: flex-start;          /* kill centering */
+  text-align: left;
 }
 
-/* ===== Presale card (moved from inline) ===== */
-:root{
-  --bg:#0e1220; --panel:#141a2a; --ink:#e7f0ff; --muted:#9fb3ff;
-  --stroke:#2a3355; --accent:#243060; --accent-hover:#2e3a78;
-  --chip:#1b2344; --bar:#202a4a; --fill:#4aa3ff;
+/* 5) Address + Copy: grid so they never overlap */
+.pay-field{
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: 8px;
+}
+#payAddress{
+  grid-column: 1 / 2;
+  width: 450px;
+  padding-right: 12px !important;       /* no fake space for button */
+  text-overflow: ellipsis; white-space: nowrap; overflow: hidden;
 }
 
-html,body{background:var(--bg); color:var(--ink);}
-body{margin:0; font-family:Inter,system-ui,Arial; font-size:16px;}
 
-.wrap{
-  min-height:100dvh;
-  display:grid;
-  place-items:center;
-  padding:24px;
+@media (max-width: 600px){
+  .dd{ max-width: 100%; }
+  .dd-list{ max-width: 96vw; }
+  .pay-field{ grid-template-columns: 1fr auto; }
 }
 
-.card{
-  max-width:720px; width:100%;
-  background:var(--panel);
-  border:1px solid var(--stroke);
-  border-radius:20px;
-  padding:20px 18px;
+/* top-of-page connect button row */
+.connect-wrap{
+  display:flex;
+  justify-content:flex-end;   /* push button to the right */
+  padding:12px 16px;
+}
+.connect-wrap #connectPill{
+  margin:0;
+  position:static;            /* make sure it's not fixed/sticky */
+  width:auto;                 /* not full width on desktop */
 }
 
-/* headings + muted text */
-h1{margin:0 0 8px; font-size:28px}
-.muted{color:var(--muted)}
-
-/* layout rows / info boxes */
-.row{display:flex; flex-wrap:wrap; gap:12px; margin:14px 0}
-.box{
-  flex:1 1 180px;
-  min-width:180px;
-  background:var(--chip);
-  border-radius:12px;
-  padding:12px;
+@media (max-width:600px){
+  .connect-wrap{ padding:8px 12px; }
+  .connect-wrap #connectPill{ width:100%; }  /* full width only on mobile */
 }
 
-/* buttons */
-.btn, .cta, button{
-  display:inline-flex; align-items:center; justify-content:center;
-  padding:12px 14px; min-height:48px;
-  border-radius:12px; font-weight:600; text-decoration:none;
-  background:var(--accent); color:#fff;
+/* --- Do NOT stretch the top connect pill on mobile --- */
+.connect-wrap { display:flex; justify-content:flex-end; padding:8px 12px; }
+
+/* override any global mobile rule */
+#connectPill{
+  width:auto !important;
+  min-width:unset !important;
+  flex:0 0 auto !important;   /* don't grow */
+  align-self:flex-start;
+  position:static !important;  /* just in case */
 }
-.btn:hover, .cta:hover, button:hover{ background:var(--accent-hover); }
 
-/* progress bar */
-.bar{height:10px; background:var(--bar); border-radius:999px; overflow:hidden}
-.fill{height:100%; width:35%; background:var(--fill)}
+/* if you kept the per-card connect button, leave it alone */
+.card #connectPill { /* no change */ }
 
-/* small helper text */
-code{background:#0e1530; padding:6px 8px; border-radius:10px; display:inline-block}
-.small{font-size:12px; opacity:.7; margin-top:8px}
-
-/* back link tap area */
-.back{position:fixed; top:12px; left:12px; color:var(--muted); text-decoration:none; padding:6px 8px}
-
-/* ===== Mobile polish ===== */
-@media (max-width:480px){
-  .card{padding:16px}
-  h1{font-size:clamp(22px,6vw,28px)}
-  .row{gap:12px}
-  .box{flex:1 1 100%; min-width:0}      /* boxes stack */
-  .btn, .cta, button{width:100%}        /* full-width CTAs */
-}
