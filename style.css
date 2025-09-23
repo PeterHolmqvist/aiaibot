@@ -322,3 +322,165 @@ body.presale .dd .dd-list{
   body.presale #payAddress{ width:100% !important; }
 }
 
+/* ===== Mobile polish ===== */
+* { box-sizing: border-box; }
+
+html, body {
+  max-width: 100%;
+  overflow-x: hidden;           /* kill sideways scroll */
+  -webkit-text-size-adjust: 100%;
+}
+
+/* Keep base readable on iOS so it won’t auto-zoom inputs */
+body, input, select, button { font-size: 16px; }
+
+/* Layout container */
+.container, .wrap, .page {
+  width: min(100%, 960px);
+  margin-inline: auto;
+  padding-inline: 16px;
+}
+
+/* Cards */
+.card {
+  border-radius: 16px;
+  padding: 16px;
+  gap: 12px;
+}
+
+/* Buttons (consistent look + tap target) */
+.btn, button, .cta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;                   /* full width on mobile */
+  min-height: 48px;              /* thumb-friendly */
+  padding: 12px 16px;
+  border-radius: 12px;
+  font-weight: 600;
+  line-height: 1.1;
+  text-align: center;
+}
+
+/* Compact pills (wallet address / copy) */
+.pill, .address-pill {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  min-height: 44px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Inputs */
+input[type="number"], input, select {
+  width: 100%;
+  min-height: 48px;
+  padding: 10px 12px;
+  border-radius: 10px;
+}
+
+/* Icon row spacing */
+.row, .grid, .stack { gap: 12px; }
+
+/* Don’t let large hero images blow the layout */
+img, svg, video { max-width: 100%; height: auto; }
+
+/* ===== Small screens ===== */
+@media (max-width: 480px) {
+  h1 { font-size: clamp(22px, 6vw, 28px); }
+  h2 { font-size: clamp(18px, 5vw, 22px); }
+  p  { font-size: 15.5px; }
+
+  .grid-2, .cols-2 {
+    display: grid;
+    grid-template-columns: 1fr; /* stack columns */
+    gap: 16px;
+  }
+
+  .card { padding: 14px; }
+  .section { padding-block: 16px; }
+
+  /* Make the big “Pay with wallet” button fixed at bottom (optional) */
+  .sticky-cta {
+    position: sticky;
+    bottom: calc(env(safe-area-inset-bottom, 0) + 12px);
+    z-index: 20;
+  }
+}
+
+/* iOS safe area */
+.footer, .sticky-cta {
+  padding-bottom: calc(env(safe-area-inset-bottom, 0) + 12px);
+}
+
+/* ===== Presale card (moved from inline) ===== */
+:root{
+  --bg:#0e1220; --panel:#141a2a; --ink:#e7f0ff; --muted:#9fb3ff;
+  --stroke:#2a3355; --accent:#243060; --accent-hover:#2e3a78;
+  --chip:#1b2344; --bar:#202a4a; --fill:#4aa3ff;
+}
+
+html,body{background:var(--bg); color:var(--ink);}
+body{margin:0; font-family:Inter,system-ui,Arial; font-size:16px;}
+
+.wrap{
+  min-height:100dvh;
+  display:grid;
+  place-items:center;
+  padding:24px;
+}
+
+.card{
+  max-width:720px; width:100%;
+  background:var(--panel);
+  border:1px solid var(--stroke);
+  border-radius:20px;
+  padding:20px 18px;
+}
+
+/* headings + muted text */
+h1{margin:0 0 8px; font-size:28px}
+.muted{color:var(--muted)}
+
+/* layout rows / info boxes */
+.row{display:flex; flex-wrap:wrap; gap:12px; margin:14px 0}
+.box{
+  flex:1 1 180px;
+  min-width:180px;
+  background:var(--chip);
+  border-radius:12px;
+  padding:12px;
+}
+
+/* buttons */
+.btn, .cta, button{
+  display:inline-flex; align-items:center; justify-content:center;
+  padding:12px 14px; min-height:48px;
+  border-radius:12px; font-weight:600; text-decoration:none;
+  background:var(--accent); color:#fff;
+}
+.btn:hover, .cta:hover, button:hover{ background:var(--accent-hover); }
+
+/* progress bar */
+.bar{height:10px; background:var(--bar); border-radius:999px; overflow:hidden}
+.fill{height:100%; width:35%; background:var(--fill)}
+
+/* small helper text */
+code{background:#0e1530; padding:6px 8px; border-radius:10px; display:inline-block}
+.small{font-size:12px; opacity:.7; margin-top:8px}
+
+/* back link tap area */
+.back{position:fixed; top:12px; left:12px; color:var(--muted); text-decoration:none; padding:6px 8px}
+
+/* ===== Mobile polish ===== */
+@media (max-width:480px){
+  .card{padding:16px}
+  h1{font-size:clamp(22px,6vw,28px)}
+  .row{gap:12px}
+  .box{flex:1 1 100%; min-width:0}      /* boxes stack */
+  .btn, .cta, button{width:100%}        /* full-width CTAs */
+}
