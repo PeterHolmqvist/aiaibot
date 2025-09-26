@@ -5,6 +5,16 @@
     "lib": ["es2015"],
     "module": "commonjs",
     "target": "es6",
-    "esModuleInterop": true
+    "esModuleInterop": true,
+    
+  
+    "target": "ES2020",
+    "module": "commonjs",
+    "lib": ["ES2020", "DOM"],
+    "types": ["node"],
+    "esModuleInterop": true,
+    "skipLibCheck": true
+  
+
   }
 }

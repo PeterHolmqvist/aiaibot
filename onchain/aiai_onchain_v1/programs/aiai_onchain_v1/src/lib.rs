@@ -1,7 +1,12 @@
 use anchor_lang::prelude::*;
-use anchor_spl::token::{Mint, Token};
+use anchor_lang::system_program;
+use anchor_spl::{
+    associated_token::AssociatedToken,
+    token::{self, FreezeAccount, Mint, MintTo, Token, TokenAccount},
+};
 
-declare_id!("FDCr1ogj5pg5HVVKwoRoBkuvbPMk1Hvapk5efAh4j1JG");
+declare_id!("6Dm7yMZaLY6R757Az8uZkTwU4yXUzNx5h6YFuoqRqcQk");
+
 
 #[program]
 pub mod aiai_onchain_v1 {
@@ -36,7 +41,7 @@ pub mod aiai_onchain_v1 {
             .ok_or(PresaleError::MathOverflow)?;
         sale.supply_cap = u64::try_from(cap).map_err(|_| PresaleError::MathOverflow)?;
 
-        // safety: require mint & freeze authority = PDA
+        // require mint & freeze authority = PDA
         require_keys_eq!(
             ctx.accounts.mint.mint_authority.unwrap(),
             ctx.accounts.mint_authority.key(),
@@ -51,13 +56,91 @@ pub mod aiai_onchain_v1 {
         Ok(())
     }
 
-    // small admin toggles (we'll use later)
     pub fn set_paused(ctx: Context<AdminOnly>, paused: bool) -> Result<()> {
         ctx.accounts.presale.paused = paused;
         Ok(())
     }
+
     pub fn set_tge(ctx: Context<AdminOnly>, live: bool) -> Result<()> {
         ctx.accounts.presale.tge_live = live;
+        Ok(())
+    }
+
+    /// Buyer pays SOL; program mints tokens to buyer ATA and freezes it.
+    pub fn purchase(ctx: Context<Purchase>, amount_lamports: u64) -> Result<()> {
+        let sale = &mut ctx.accounts.presale;
+
+        // checks
+        require!(!sale.paused, PresaleError::Unauthorized);
+        require!(amount_lamports >= sale.min_total, PresaleError::BelowMin);
+        require!(amount_lamports <= sale.max_total, PresaleError::AboveMax);
+        require!(
+            amount_lamports % sale.price_lamports_per_token == 0,
+            PresaleError::NotMultiple
+        );
+
+        // move SOL -> vault
+        system_program::transfer(
+            CpiContext::new(
+                ctx.accounts.system_program.to_account_info(),
+                system_program::Transfer {
+                    from: ctx.accounts.buyer.to_account_info(),
+                    to: ctx.accounts.vault.to_account_info(),
+                },
+            ),
+            amount_lamports,
+        )?;
+
+        // tokens = amount * 10^decimals / price
+        let scale: u128 = 10u128.pow(ctx.accounts.mint.decimals as u32);
+        let tokens_u128 = (amount_lamports as u128)
+            .checked_mul(scale).ok_or(PresaleError::MathOverflow)?
+            .checked_div(sale.price_lamports_per_token as u128).ok_or(PresaleError::MathOverflow)?;
+        let tokens: u64 = u64::try_from(tokens_u128).map_err(|_| PresaleError::MathOverflow)?;
+        require!(tokens > 0, PresaleError::InvalidLimits);
+
+        // cap check
+        let remaining = sale.supply_cap.checked_sub(sale.total_sold).ok_or(PresaleError::MathOverflow)?;
+        require!(tokens <= remaining, PresaleError::ExceedsSupplyCap);
+
+        
+        // mint + freeze (PDA signs)
+        // mint + freeze (PDA signs)
+        let sale_key = sale.key(); // <- keep this binding alive
+        let seeds: &[&[u8]] = &[b"mint-auth", sale_key.as_ref(), &[sale.mint_auth_bump]];
+        let signer: &[&[&[u8]]] = &[seeds];
+
+
+        token::mint_to(
+            CpiContext::new_with_signer(
+                ctx.accounts.token_program.to_account_info(),
+                MintTo {
+                    mint: ctx.accounts.mint.to_account_info(),
+                    to: ctx.accounts.buyer_ata.to_account_info(),
+                    authority: ctx.accounts.mint_authority.to_account_info(),
+                },
+                signer,
+            ),
+            tokens,
+        )?;
+
+        token::freeze_account(
+            CpiContext::new_with_signer(
+                ctx.accounts.token_program.to_account_info(),
+                FreezeAccount {
+                    account: ctx.accounts.buyer_ata.to_account_info(),
+                    mint: ctx.accounts.mint.to_account_info(),
+                    authority: ctx.accounts.mint_authority.to_account_info(),
+                },
+                signer,
+            ),
+        )?;
+
+        // counters + event
+        sale.total_raised = sale.total_raised.checked_add(amount_lamports).ok_or(PresaleError::MathOverflow)?;
+        sale.total_sold   = sale.total_sold.checked_add(tokens).ok_or(PresaleError::MathOverflow)?;
+        emit!(Buy { buyer: ctx.accounts.buyer.key(), lamports: amount_lamports, tokens });
+
         Ok(())
     }
 }
@@ -81,19 +164,13 @@ pub struct Initialize<'info> {
     )]
     pub presale: Account<'info, Presale>,
 
-    /// PDA system-account vault (receives SOL later)
-    #[account(
-        seeds = [b"vault", presale.key().as_ref()],
-        bump
-    )]
+    /// PDA system-account vault (receives SOL)
+    #[account(seeds = [b"vault", presale.key().as_ref()], bump)]
     /// CHECK: system account PDA
     pub vault: AccountInfo<'info>,
 
     /// PDA that must be mint & freeze authority
-    #[account(
-        seeds = [b"mint-auth", presale.key().as_ref()],
-        bump
-    )]
+    #[account(seeds = [b"mint-auth", presale.key().as_ref()], bump)]
     /// CHECK: PDA signer only
     pub mint_authority: AccountInfo<'info>,
 
@@ -112,6 +189,52 @@ pub struct AdminOnly<'info> {
         has_one = admin @ PresaleError::Unauthorized
     )]
     pub presale: Account<'info, Presale>,
+}
+
+#[derive(Accounts)]
+pub struct Purchase<'info> {
+    #[account(mut)]
+    pub buyer: Signer<'info>,
+
+    #[account(
+        mut,
+        seeds = [b"presale", presale.mint.as_ref()],
+        bump = presale.bump,
+    )]
+    pub presale: Account<'info, Presale>,
+
+    #[account(mut)]
+    pub mint: Account<'info, Mint>,
+
+    /// PDA signer (mint & freeze authority)
+    #[account(
+        seeds = [b"mint-auth", presale.key().as_ref()],
+        bump = presale.mint_auth_bump,
+    )]
+    /// CHECK: PDA signer
+    pub mint_authority: AccountInfo<'info>,
+
+    /// SOL vault PDA
+    #[account(
+        mut,
+        seeds = [b"vault", presale.key().as_ref()],
+        bump = presale.vault_bump,
+    )]
+    /// CHECK: system account PDA
+    pub vault: AccountInfo<'info>,
+
+    /// Buyer ATA (auto-created if missing)
+    #[account(
+        init_if_needed,
+        payer = buyer,
+        associated_token::mint = mint,
+        associated_token::authority = buyer
+    )]
+    pub buyer_ata: Account<'info, TokenAccount>,
+
+    pub token_program: Program<'info, Token>,
+    pub associated_token_program: Program<'info, AssociatedToken>,
+    pub system_program: Program<'info, System>,
 }
 
 /* -------------------- State -------------------- */
@@ -136,6 +259,14 @@ impl Presale {
     pub const SIZE: usize = 1+1+1 + 32+32 + 8+8+8+8+8 + 8 + 1+1;
 }
 
+/* -------------------- Events -------------------- */
+#[event]
+pub struct Buy {
+    pub buyer: Pubkey,
+    pub lamports: u64,
+    pub tokens: u64,
+}
+
 /* -------------------- Errors -------------------- */
 #[error_code]
 pub enum PresaleError {
@@ -144,5 +275,11 @@ pub enum PresaleError {
     #[msg("Invalid min/max limits")] InvalidLimits,
     #[msg("Mint authority not set to PDA")] MintAuthorityNotSet,
     #[msg("Freeze authority not set to PDA")] FreezeAuthorityNotSet,
+    #[msg("Amount below min")] BelowMin,
+    #[msg("Amount above max")] AboveMax,
+    #[msg("Amount not a multiple of price")] NotMultiple,
+    #[msg("Supply cap exceeded")] ExceedsSupplyCap,
 }
+
+
 
