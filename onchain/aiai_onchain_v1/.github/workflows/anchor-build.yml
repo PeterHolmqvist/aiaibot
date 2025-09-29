@@ -1,5 +1,10 @@
 name: Build Anchor program
-on: { workflow_dispatch: {} }
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - "onchain/aiai_onchain_v1/**"
+      - ".github/workflows/anchor-build.yml"
 
 jobs:
   build:
@@ -7,20 +12,30 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Anchor build (Docker v0.31.1)
+      - name: Build inside Anchor Docker (v0.31.1)
         uses: addnab/docker-run-action@v3
         with:
           image: solanafoundation/anchor:v0.31.1
-          options: -v ${{ github.workspace }}:/work -w /work
+          options: -v ${{ github.workspace }}:/work -w /work/onchain/aiai_onchain_v1
           run: |
-            anchor --version
-            ls -la   # should list Anchor.toml here
+            set -euxo pipefail
+            echo "PWD:" && pwd
+            echo "List repo root:" && ls -la /work
+            echo "List working dir:" && ls -la
+            echo "Anchor version:" && anchor --version
+
+            # build
             anchor build
 
-      - name: Upload artifacts
+            echo "After build, show deploy dir:"
+            ls -la target/deploy || true
+
+      - name: Upload program artifacts
         uses: actions/upload-artifact@v4
         with:
           name: program-artifacts
           path: |
-            target/deploy/aiai_onchain_v1.so
-            target/deploy/aiai_onchain_v1-keypair.json
+            onchain/aiai_onchain_v1/target/deploy/*.so
+            onchain/aiai_onchain_v1/target/deploy/*-keypair.json
+          if-no-files-found: error
+
