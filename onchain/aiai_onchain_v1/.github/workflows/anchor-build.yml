@@ -13,22 +13,19 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Build inside Anchor Docker (v0.31.1)
-        uses: addnab/docker-run-action@v3
-        with:
-          image: solanafoundation/anchor:v0.31.1
-          options: -v ${{ github.workspace }}:/work -w /work/onchain/aiai_onchain_v1
-          run: |
-            set -euxo pipefail
-            echo "PWD:" && pwd
-            echo "List repo root:" && ls -la /work
-            echo "List working dir:" && ls -la
-            echo "Anchor version:" && anchor --version
+  uses: addnab/docker-run-action@v3
+  with:
+    image: solanafoundation/anchor:v0.31.1
+    options: -v ${{ github.workspace }}:/work -w /work/onchain/aiai_onchain_v1
+    run: |
+      set -euxo pipefail
+      echo "PWD:" && pwd
+      anchor --version
+      anchor build
+      # 🔧 make artifacts readable by the host runner
+      chmod -R a+r target/deploy
+      echo "After build:" && ls -la target/deploy || true
 
-            # build
-            anchor build
-
-            echo "After build, show deploy dir:"
-            ls -la target/deploy || true
 
       - name: Upload program artifacts
         uses: actions/upload-artifact@v4
