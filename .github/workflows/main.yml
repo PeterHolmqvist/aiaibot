@@ -1,0 +1,28 @@
+name: Build Anchor program
+on: { workflow_dispatch: {} }
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # Build inside the official Anchor Docker image
+      - name: Anchor build (Docker v0.31.1)
+        uses: addnab/docker-run-action@v3
+        with:
+          image: solanafoundation/anchor:v0.31.1
+          # 👇 adjust this path if your Anchor.toml lives elsewhere
+          options: -v ${{ github.workspace }}:/work -w /work/onchain/aiai_onchain_v1
+          run: |
+            echo "Working dir:" && pwd && ls -la
+            anchor --version
+            anchor build
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: program-artifacts
+          path: |
+            onchain/aiai_onchain_v1/target/deploy/aiai_onchain_v1.so
+            onchain/aiai_onchain_v1/target/deploy/aiai_onchain_v1-keypair.json
