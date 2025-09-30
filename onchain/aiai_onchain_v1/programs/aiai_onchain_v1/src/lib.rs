@@ -1,8 +1,8 @@
 use anchor_lang::prelude::*;
 use anchor_lang::system_program;
 use anchor_spl::{
-    associated_token::{self, AssociatedToken, Create}, // <— changed here
-    token::{self, FreezeAccount, Mint, MintTo, Token, TokenAccount},
+    associated_token::{self, AssociatedToken, Create},
+    token::{self, FreezeAccount, Mint, MintTo, Token},
 };
 
 declare_id!("6Dm7yMZaLY6R757Az8uZkTwU4yXUzNx5h6YFuoqRqcQk");
@@ -194,7 +194,8 @@ pub struct Initialize<'info> {
         seeds = [b"vault", presale.key().as_ref()],
         bump
     )]
-    pub vault: SystemAccount<'info>,
+    /// CHECK: system-owned PDA, no data
+    pub vault: AccountInfo<'info>,   // ← changed from SystemAccount<'info>
 
     /// PDA that must be mint & freeze authority
     #[account(seeds = [b"mint-auth", presale.key().as_ref()], bump)]
@@ -303,6 +304,7 @@ pub enum PresaleError {
     #[msg("Amount not a multiple of price")] NotMultiple,
     #[msg("Supply cap exceeded")] ExceedsSupplyCap,
 }
+
 
 
 
