@@ -12,17 +12,32 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Build inside Anchor Docker (v0.30.0)
+      - name: Build inside Anchor Docker (v0.30.0; nuke lockfiles)
         uses: addnab/docker-run-action@v3
         with:
           image: solanafoundation/anchor:v0.30.0
           options: -v ${{ github.workspace }}:/work -w /work/onchain/aiai_onchain_v1
           run: |
             set -euxo pipefail
-            anchor --version
+            echo "Anchor version:" && anchor --version
+            echo "rustc:" && rustc --version
+            echo "cargo:" && cargo --version
+
+            echo "Confirm deps (should be =0.30.0):"
+            grep -n "anchor-lang" programs/aiai_onchain_v1/Cargo.toml
+            grep -n "anchor-spl"  programs/aiai_onchain_v1/Cargo.toml
+
+            echo "Remove ALL lockfiles to avoid stale 0.31 pins"
+            rm -f Cargo.lock programs/aiai_onchain_v1/Cargo.lock || true
+
+            # build
             anchor build
-            chmod -R a+r target/deploy || true
+
+            echo "Show deploy dir:"
             ls -la target/deploy || true
+
+            # make artifacts readable by runner (not strictly needed since we only upload .so)
+            chmod -R a+r target/deploy || true
 
       - name: Upload program .so (no keypair)
         uses: actions/upload-artifact@v4
@@ -30,5 +45,6 @@ jobs:
           name: program-artifacts
           path: onchain/aiai_onchain_v1/target/deploy/aiai_onchain_v1.so
           if-no-files-found: error
+
 
 
