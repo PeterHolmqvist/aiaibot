@@ -9,7 +9,7 @@ skip-lint = false
 aiai_onchain_v1 = "7Br9YjPsgziRbUxmHxCxjq2fnBM17FzXo8XBwqbikXpi"
 
 [programs.devnet]
-aiai_onchain_v1 = "FDCr1ogj5pg5HVVKwoRoBkuvbPMk1Hvapk5efAh4j1JG"
+aiai_onchain_v1 = "5wUBGHhQ4U4sDK6yLbpivABEoWjpprMDE2YGhmA8jjFA"
 
 [registry]
 url = "https://api.apr.dev"

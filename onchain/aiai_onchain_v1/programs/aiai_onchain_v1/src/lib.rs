@@ -5,7 +5,7 @@ use anchor_spl::{
     token::{self, FreezeAccount, Mint, MintTo, Token},
 };
 
-declare_id!("6Dm7yMZaLY6R757Az8uZkTwU4yXUzNx5h6YFuoqRqcQk");
+declare_id!("5wUBGHhQ4U4sDK6yLbpivABEoWjpprMDE2YGhmA8jjFA");
 
 #[program]
 pub mod aiai_onchain_v1 {
