@@ -269,18 +269,25 @@ async function purchaseFromUi() {
     if (!provider.publicKey) await provider.connect();
     const buyer = provider.publicKey;
 
-    // ✅ Pin canonical SPL program IDs locally (avoid any accidental overrides)
+    // Pin canonical SPL program IDs (classic, NOT token-2022)
     const TOKEN_PROGRAM_ID_CANON = new solanaWeb3.PublicKey("TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA");
     const ATA_PROGRAM_ID_CANON   = new solanaWeb3.PublicKey("ATokenGPvR93gBfue3DBeQ8Z8CwRk3s8H7RkG4GZLFpR");
 
-    // ✅ Derive the buyer ATA with those exact IDs
+    // Derive buyer ATA using those exact IDs (do NOT use ataFor here)
     const buyerAta = solanaWeb3.PublicKey.findProgramAddressSync(
       [buyer.toBuffer(), TOKEN_PROGRAM_ID_CANON.toBuffer(), MINT.toBuffer()],
       ATA_PROGRAM_ID_CANON
     )[0];
 
-    // PDAs
     const { presalePDA, vaultPDA, mintAuthPDA } = getPDAs();
+
+    // sanity log
+    console.log('[preflight]', {
+      tokenProgram: TOKEN_PROGRAM_ID_CANON.toBase58(),
+      ataProgram:   ATA_PROGRAM_ID_CANON.toBase58(),
+      buyerAta:     buyerAta.toBase58(),
+    });
+
 
     // Anchor discriminator + lamports
     const disc = await sha256_8("purchase");
