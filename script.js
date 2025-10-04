@@ -246,14 +246,16 @@ function getPDAs(){
   return _pdaCache;
 }
 
-/* ---------- ATA helper ---------- */
-const ataFor = (owner) =>
-  solanaWeb3.PublicKey.findProgramAddressSync(
-    [owner.toBuffer(), TOKEN_PROGRAM_ID.toBuffer(), MINT.toBuffer()],
-    ASSOCIATED_TOKEN_PROGRAM_ID
+/* ---------- ATA helper (pinned classic SPL program IDs) ---------- */
+const ataFor = (owner) => {
+  const TOKEN_PROGRAM_ID_CANON = new solanaWeb3.PublicKey("TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA");
+  const ATA_PROGRAM_ID_CANON   = new solanaWeb3.PublicKey("ATokenGPvR93gBfue3DBeQ8Z8CwRkG4GZLFpR");
+  return solanaWeb3.PublicKey.findProgramAddressSync(
+    [owner.toBuffer(), TOKEN_PROGRAM_ID_CANON.toBuffer(), MINT.toBuffer()],
+    ATA_PROGRAM_ID_CANON
   )[0];
+};
 
-/* ---------- PURCHASE (calls on-chain `purchase`) ---------- */
 /* ---------- PURCHASE (calls on-chain `purchase`) ---------- */
 async function purchaseFromUi() {
   const status = $id('payStatus');
@@ -271,7 +273,7 @@ async function purchaseFromUi() {
 
     // Pin canonical SPL program IDs (classic, NOT token-2022)
     const TOKEN_PROGRAM_ID_CANON = new solanaWeb3.PublicKey("TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA");
-    const ATA_PROGRAM_ID_CANON   = new solanaWeb3.PublicKey("ATokenGPvR93gBfue3DBeQ8Z8CwRk3s8H7RkG4GZLFpR");
+    const ATA_PROGRAM_ID_CANON   = new solanaWeb3.PublicKey("ATokenGPvR93gBfue3DBeQ8Z8CwRkG4GZLFpR");
 
     // Derive buyer ATA using those exact IDs (do NOT use ataFor here)
     const buyerAta = solanaWeb3.PublicKey.findProgramAddressSync(
@@ -281,19 +283,11 @@ async function purchaseFromUi() {
 
     const { presalePDA, vaultPDA, mintAuthPDA } = getPDAs();
 
-    // sanity log
-    console.log('[preflight]', {
-      tokenProgram: TOKEN_PROGRAM_ID_CANON.toBase58(),
-      ataProgram:   ATA_PROGRAM_ID_CANON.toBase58(),
-      buyerAta:     buyerAta.toBase58(),
-    });
-
-
     // Anchor discriminator + lamports
     const disc = await sha256_8("purchase");
     const data = new Uint8Array([...disc, ...u64le(BigInt(lamports))]);
 
-    // ✅ Pass the same canonical IDs in the accounts list
+    // Accounts list (use the same canonical IDs)
     const keys = [
       { pubkey: buyer,       isSigner: true,  isWritable: true },
       { pubkey: presalePDA,  isSigner: false, isWritable: true },
@@ -310,21 +304,22 @@ async function purchaseFromUi() {
     const tx = new solanaWeb3.Transaction().add(ix);
     tx.feePayer = buyer;
     tx.recentBlockhash = (await conn.getLatestBlockhash("confirmed")).blockhash;
-    // ---- DEBUG: show what we will send
-console.log('[preflight]', {
-  tokenProgram: TOKEN_PROGRAM_ID_CANON.toBase58(),
-  ataProgram:   ATA_PROGRAM_ID_CANON.toBase58(),
-  buyerAta:     buyerAta.toBase58(),
-});
-console.table(keys.map((k, i) => ({ i, pubkey: k.pubkey.toBase58() })));
 
-// Simulate to get on-chain logs without sending
-const sim = await conn.simulateTransaction(tx, { sigVerify: false, commitment: 'processed' });
-console.log('[simulate.err]', sim.value.err);
-console.log('[simulate.logs]', sim.value.logs);
-if (sim.value.err) {
-  throw new Error('Simulate failed (see logs above).');
-}
+    // ---- DEBUG: show what we will send
+    console.log('[preflight]', {
+      tokenProgram: TOKEN_PROGRAM_ID_CANON.toBase58(),
+      ataProgram:   ATA_PROGRAM_ID_CANON.toBase58(),
+      buyerAta:     buyerAta.toBase58(),
+    });
+    console.table(keys.map((k, i) => ({ i, pubkey: k.pubkey.toBase58() })));
+
+    // Simulate to get on-chain logs without sending
+    const sim = await conn.simulateTransaction(tx, { sigVerify: false, commitment: 'processed' });
+    console.log('[simulate.err]', sim.value.err);
+    console.log('[simulate.logs]', sim.value.logs);
+    if (sim.value.err) {
+      throw new Error('Simulate failed (see logs above).');
+    }
 
     status && (status.textContent = "Requesting signature…");
     if (provider.signAndSendTransaction) {
@@ -386,6 +381,7 @@ window.addEventListener('DOMContentLoaded', () => {
   // ======== end of your code ========
   console.log('[AiAiBot] script ready ✓');
 })();
+
 
 
 
