@@ -3,15 +3,16 @@ import * as anchor from "@coral-xyz/anchor";
 import { createHash } from "crypto";
 
 const RPC = "https://api.devnet.solana.com";
-const PROGRAM_ID = new PublicKey("6Dm7yMZaLY6R757Az8uZkTwU4yXUzNx5h6YFuoqRqcQk");
+const PROGRAM_ID = new PublicKey("GKiKsPmSQHGvg5VFXAGy99vmb3JV9BPnqFzC9iwp95Km");
 
 const MINT_STR = process.env.MINT;
 if (!MINT_STR) throw new Error("Set env var: MINT=<your_devnet_mint_address>");
 const MINT = new PublicKey(MINT_STR);
 
-const PRICE = 2_000_000n;      // 0.002 SOL
-const MIN   = 200_000_000n;    // 0.2 SOL
-const MAX   = 2_000_000_000n;  // 2 SOL
+// Defaults, but you can override via env: PRICE_LAMPORTS_PER_TOKEN / MIN_LAMPORTS / MAX_LAMPORTS
+const PRICE = BigInt(process.env.PRICE_LAMPORTS_PER_TOKEN ?? 2_000_000);      // 0.002 SOL
+const MIN   = BigInt(process.env.MIN_LAMPORTS ?? 200_000_000);                 // 0.2 SOL
+const MAX   = BigInt(process.env.MAX_LAMPORTS ?? 2_000_000_000);               // 2 SOL
 
 function discr(name: string) {
   const h = createHash("sha256").update(`global:${name}`).digest();
@@ -26,13 +27,16 @@ function u64(n: bigint) {
 
 (async () => {
   const conn = new Connection(RPC, "confirmed");
-  const provider = anchor.AnchorProvider.local();
-  // @ts-ignore
-  const admin = (provider.wallet as anchor.Wallet).payer;
 
-  const [presale]  = PublicKey.findProgramAddressSync([Buffer.from("presale"), MINT.toBuffer()], PROGRAM_ID);
-  const [vault]    = PublicKey.findProgramAddressSync([Buffer.from("vault"), presale.toBuffer()], PROGRAM_ID);
-  const [mintAuth] = PublicKey.findProgramAddressSync([Buffer.from("mint-auth"), presale.toBuffer()], PROGRAM_ID);
+  // Use the wallet & RPC from env (ANCHOR_WALLET / ANCHOR_PROVIDER_URL)
+  const provider = anchor.AnchorProvider.env();
+  anchor.setProvider(provider);
+  const admin = (provider.wallet as any).payer; // NodeWallet keypair
+
+  const enc = (s: string) => new TextEncoder().encode(s);
+  const [presale]  = PublicKey.findProgramAddressSync([enc("presale"),   MINT.toBytes()], PROGRAM_ID);
+  const [vault]    = PublicKey.findProgramAddressSync([enc("vault"),     presale.toBytes()], PROGRAM_ID);
+  const [mintAuth] = PublicKey.findProgramAddressSync([enc("mint-auth"), presale.toBytes()], PROGRAM_ID);
 
   console.log("Presale PDA:  ", presale.toBase58());
   console.log("Vault PDA:    ", vault.toBase58());
@@ -42,17 +46,18 @@ function u64(n: bigint) {
     ...discr("initialize"),
     ...u64(PRICE), ...u64(MIN), ...u64(MAX),
   ]);
+
   const keys = [
-    { pubkey: admin.publicKey, isSigner: true,  isWritable: true },
-    { pubkey: MINT,            isSigner: false, isWritable: true },
-    { pubkey: presale,         isSigner: false, isWritable: true },
-    { pubkey: vault,           isSigner: false, isWritable: true },
-    { pubkey: mintAuth,        isSigner: false, isWritable: false },
-    { pubkey: SystemProgram.programId, isSigner: false, isWritable: false },
+    { pubkey: admin.publicKey,               isSigner: true,  isWritable: true },
+    { pubkey: MINT,                          isSigner: false, isWritable: true },
+    { pubkey: presale,                       isSigner: false, isWritable: true },
+    { pubkey: vault,                         isSigner: false, isWritable: true },
+    { pubkey: mintAuth,                      isSigner: false, isWritable: false },
+    { pubkey: SystemProgram.programId,       isSigner: false, isWritable: false },
     { pubkey: new PublicKey("TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"), isSigner: false, isWritable: false },
   ];
-  const ix = new TransactionInstruction({ programId: PROGRAM_ID, keys, data: Buffer.from(data), });
 
+  const ix = new TransactionInstruction({ programId: PROGRAM_ID, keys, data: Buffer.from(data) });
   const tx = new Transaction().add(ix);
   tx.feePayer = admin.publicKey;
   tx.recentBlockhash = (await conn.getLatestBlockhash("confirmed")).blockhash;
@@ -66,4 +71,5 @@ function u64(n: bigint) {
     console.error("Run the two spl-token authorize commands with that MintAuth PDA, then rerun this script.");
   }
 })();
+
 
