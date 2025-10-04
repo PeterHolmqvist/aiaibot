@@ -16,10 +16,10 @@
 
    /* ---------- CONSTANTS ( devnet ) ---------- */
 const RPC = "https://api.devnet.solana.com";
-const PROGRAM_ID = new solanaWeb3.PublicKey("6Dm7yMZaLY6R757Az8uZkTwU4yXUzNx5h6YFuoqRqcQk"); // your deployed devnet program
+const PROGRAM_ID = new solanaWeb3.PublicKey("GKiKsPmSQHGvg5VFXAGy99vmb3JV9BPnqFzC9iwp95Km"); // your deployed devnet program
 const MINT       = new solanaWeb3.PublicKey("CXxT8WBTSyCdTW14q4DTjCRzH2etqXxKZCRkffFpermn"); // your devnet mint
 
-const PROGRAM_ID = new solanaWeb3.PublicKey("GKiKsPmSQHGvg5VFXAGy99vmb3JV9BPnqFzC9iwp95Km");
+
 const ASSOCIATED_TOKEN_PROGRAM_ID = new solanaWeb3.PublicKey("ATokenGPvR93gBfue3DBeQ8Z8CwRk3s8H7RkG4GZLFpR");
 
 const conn = new solanaWeb3.Connection(RPC, "confirmed");
