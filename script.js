@@ -14,7 +14,7 @@
     // no return; continue so the page remains interactive while you debug
   }
 
-   /* ---------- CONSTANTS ( devnet ) ---------- */
+   
 /* ---------- CONSTANTS ( devnet ) ---------- */
 const RPC = "https://api.devnet.solana.com";
 const PROGRAM_ID = new solanaWeb3.PublicKey("GKiKsPmSQHGvg5VFXAGy99vmb3JV9BPnqFzC9iwp95Km");
@@ -254,6 +254,7 @@ const ataFor = (owner) =>
   )[0];
 
 /* ---------- PURCHASE (calls on-chain `purchase`) ---------- */
+/* ---------- PURCHASE (calls on-chain `purchase`) ---------- */
 async function purchaseFromUi() {
   const status = $id('payStatus');
   const input  = $id('amountInput');
@@ -267,13 +268,25 @@ async function purchaseFromUi() {
   try {
     if (!provider.publicKey) await provider.connect();
     const buyer = provider.publicKey;
-    const buyerAta = ataFor(buyer);
 
+    // ✅ Pin canonical SPL program IDs locally (avoid any accidental overrides)
+    const TOKEN_PROGRAM_ID_CANON = new solanaWeb3.PublicKey("TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA");
+    const ATA_PROGRAM_ID_CANON   = new solanaWeb3.PublicKey("ATokenGPvR93gBfue3DBeQ8Z8CwRk3s8H7RkG4GZLFpR");
+
+    // ✅ Derive the buyer ATA with those exact IDs
+    const buyerAta = solanaWeb3.PublicKey.findProgramAddressSync(
+      [buyer.toBuffer(), TOKEN_PROGRAM_ID_CANON.toBuffer(), MINT.toBuffer()],
+      ATA_PROGRAM_ID_CANON
+    )[0];
+
+    // PDAs
     const { presalePDA, vaultPDA, mintAuthPDA } = getPDAs();
 
+    // Anchor discriminator + lamports
     const disc = await sha256_8("purchase");
     const data = new Uint8Array([...disc, ...u64le(BigInt(lamports))]);
 
+    // ✅ Pass the same canonical IDs in the accounts list
     const keys = [
       { pubkey: buyer,       isSigner: true,  isWritable: true },
       { pubkey: presalePDA,  isSigner: false, isWritable: true },
@@ -281,8 +294,8 @@ async function purchaseFromUi() {
       { pubkey: mintAuthPDA, isSigner: false, isWritable: false },
       { pubkey: vaultPDA,    isSigner: false, isWritable: true },
       { pubkey: buyerAta,    isSigner: false, isWritable: true },
-      { pubkey: TOKEN_PROGRAM_ID,            isSigner: false, isWritable: false },
-      { pubkey: ASSOCIATED_TOKEN_PROGRAM_ID, isSigner: false, isWritable: false },
+      { pubkey: TOKEN_PROGRAM_ID_CANON, isSigner: false, isWritable: false },
+      { pubkey: ATA_PROGRAM_ID_CANON,   isSigner: false, isWritable: false },
       { pubkey: solanaWeb3.SystemProgram.programId, isSigner: false, isWritable: false },
     ];
 
