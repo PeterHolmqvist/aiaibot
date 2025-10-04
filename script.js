@@ -260,99 +260,97 @@
   };
 
   /* ---------- PURCHASE (calls on-chain `purchase`) ---------- */
-  async function purchaseFromUi() {
-    const status = $id('payStatus');
-    const input  = $id('amountInput');
-    const provider = window.solana;
-    if (!provider) { alert("No Solana wallet found (install Phantom/Trust)."); return; }
+  /* ---------- PURCHASE (calls on-chain `purchase`) ---------- */
+async function purchaseFromUi() {
+  const status = $id('payStatus');
+  const input  = $id('amountInput');
+  const provider = window.solana;
+  if (!provider) { alert("No Solana wallet found (install Phantom/Trust)."); return; }
 
-    const amt = parseFloat((input?.value || '').trim());
-    if (isNaN(amt) || amt < 0.2 || amt > 2.0) { alert("Enter an amount between 0.2 and 2.0 SOL."); return; }
-    const lamports = Math.round(amt * 1e9);
+  const amt = parseFloat((input?.value || '').trim());
+  if (isNaN(amt) || amt < 0.2 || amt > 2.0) { alert("Enter an amount between 0.2 and 2.0 SOL."); return; }
+  const lamports = Math.round(amt * 1e9);
 
+  try {
+    if (!provider.publicKey) await provider.connect();
+    const buyer = provider.publicKey;
+
+    // Pin classic SPL program IDs (not token-2022)
+    const TOKEN_PROGRAM_ID_CANON = new solanaWeb3.PublicKey("TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA");
+    const ATA_PROGRAM_ID_CANON   = new solanaWeb3.PublicKey("ATokenGPvR93gBfue3DBeQ8Z8CwRk3s8H7RkG4GZLFpR");
+
+    // Derive buyer ATA using those exact IDs
+    const buyerAta = solanaWeb3.PublicKey.findProgramAddressSync(
+      [buyer.toBuffer(), TOKEN_PROGRAM_ID_CANON.toBuffer(), MINT.toBuffer()],
+      ATA_PROGRAM_ID_CANON
+    )[0];
+
+    const { presalePDA, vaultPDA, mintAuthPDA } = getPDAs();
+
+    // Anchor discriminator + amount
+    const disc = await sha256_8("purchase");
+    const data = new Uint8Array([...disc, ...u64le(BigInt(lamports))]);
+
+    const keys = [
+      { pubkey: buyer,       isSigner: true,  isWritable: true },
+      { pubkey: presalePDA,  isSigner: false, isWritable: true },
+      { pubkey: MINT,        isSigner: false, isWritable: true },
+      { pubkey: mintAuthPDA, isSigner: false, isWritable: false },
+      { pubkey: vaultPDA,    isSigner: false, isWritable: true },
+      { pubkey: buyerAta,    isSigner: false, isWritable: true },
+      { pubkey: TOKEN_PROGRAM_ID_CANON, isSigner: false, isWritable: false },
+      { pubkey: ATA_PROGRAM_ID_CANON,   isSigner: false, isWritable: false },
+      { pubkey: solanaWeb3.SystemProgram.programId, isSigner: false, isWritable: false },
+    ];
+
+    const ix = new solanaWeb3.TransactionInstruction({ programId: PROGRAM_ID, keys, data });
+    const tx = new solanaWeb3.Transaction().add(ix);
+    tx.feePayer = buyer;
+    tx.recentBlockhash = (await conn.getLatestBlockhash("confirmed")).blockhash;
+
+    // Quick visibility in console
+    console.table(keys.map((k, i) => ({
+      i, pubkey: k.pubkey.toBase58(), isSigner: k.isSigner, isWritable: k.isWritable
+    })));
+
+    status && (status.textContent = "Requesting signature…");
+    const signed = await provider.signTransaction(tx);
+
+    // Simulate AFTER signing; support both web3.js overloads
+    let sim;
     try {
-      if (!provider.publicKey) await provider.connect();
-      const buyer = provider.publicKey;
-
-      // Pin canonical SPL program IDs
-      const TOKEN_PROGRAM_ID_CANON = safePk('TOKEN_PROGRAM_ID_CANON(run)', "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA");
-      const ATA_PROGRAM_ID_CANON   = safePk('ATA_PROGRAM_ID_CANON(run)',   "ATokenGPvR93gBfue3DBeQ8Z8CwRk3s8H7RkG4GZLFpR");
-
-      // Derive buyer ATA with pinned IDs
-      const buyerAta = solanaWeb3.PublicKey.findProgramAddressSync(
-        [buyer.toBuffer(), TOKEN_PROGRAM_ID_CANON.toBuffer(), MINT.toBuffer()],
-        ATA_PROGRAM_ID_CANON
-      )[0];
-
-      const { presalePDA, vaultPDA, mintAuthPDA } = getPDAs();
-
-      console.log('[preflight]', {
-        tokenProgram: TOKEN_PROGRAM_ID_CANON.toBase58(),
-        ataProgram:   ATA_PROGRAM_ID_CANON.toBase58(),
-        buyerAta:     buyerAta.toBase58(),
-      });
-
-      const disc = await sha256_8("purchase");
-      const data = new Uint8Array([...disc, ...u64le(BigInt(lamports))]);
-
-      const keys = [
-        { pubkey: buyer,       isSigner: true,  isWritable: true },
-        { pubkey: presalePDA,  isSigner: false, isWritable: true },
-        { pubkey: MINT,        isSigner: false, isWritable: true },
-        { pubkey: mintAuthPDA, isSigner: false, isWritable: false },
-        { pubkey: vaultPDA,    isSigner: false, isWritable: true },
-        { pubkey: buyerAta,    isSigner: false, isWritable: true },
-        { pubkey: TOKEN_PROGRAM_ID_CANON, isSigner: false, isWritable: false },
-        { pubkey: ATA_PROGRAM_ID_CANON,   isSigner: false, isWritable: false },
-        { pubkey: solanaWeb3.SystemProgram.programId, isSigner: false, isWritable: false },
-      ];
-
-      const ix = new solanaWeb3.TransactionInstruction({ programId: PROGRAM_ID, keys, data });
-      const tx = new solanaWeb3.Transaction().add(ix);
-      tx.feePayer = buyer;
-      tx.recentBlockhash = (await conn.getLatestBlockhash("confirmed")).blockhash;
-
-      console.table(keys.map((k, i) => ({ i, pubkey: k.pubkey.toBase58(), isSigner: k.isSigner, isWritable: k.isWritable })));
-
-      // Simulate (always surfaces logs + returns on failure)
-      const sim = await conn.simulateTransaction(tx, { sigVerify: false, commitment: 'processed' });
-      window.AIAI_DEBUG = {
-        buyerAta: buyerAta.toBase58(),
-        keys: keys.map(k => ({ pubkey: k.pubkey.toBase58(), isSigner: k.isSigner, isWritable: k.isWritable })),
-        err: sim.value.err,
-        logs: sim.value.logs || [],
-      };
-      console.log('[simulate.err]', sim.value.err);
-      console.log('[simulate.logs]', sim.value.logs || []);
-      if (sim.value.err) {
-        const first = (sim.value.logs || []).slice(0, 10).join('\n');
-        status && (status.textContent = `Sim failed: ${JSON.stringify(sim.value.err)}`);
-        alert(`Sim failed:\n${JSON.stringify(sim.value.err)}\n\nLogs:\n${first}`);
-        return;
-      }
-
-      status && (status.textContent = "Requesting signature…");
-      if (provider.signAndSendTransaction) {
-        const { signature } = await provider.signAndSendTransaction(tx);
-        status && (status.textContent = "Submitting…");
-        await conn.confirmTransaction(signature, "confirmed");
-        status && (status.textContent = `Success! ${signature}`);
-        alert(`Purchase sent ✔\nSignature:\n${signature}`);
-      } else {
-        const signed = await provider.signTransaction(tx);
-        const sig = await conn.sendRawTransaction(signed.serialize(), { skipPreflight: false });
-        status && (status.textContent = "Submitting…");
-        await conn.confirmTransaction(sig, "confirmed");
-        status && (status.textContent = `Success! ${sig}`);
-        alert(`Purchase sent ✔\nSignature:\n${sig}`);
-      }
+      sim = await conn.simulateTransaction(signed, { sigVerify: true, commitment: 'processed' });
     } catch (e) {
-      console.error(e);
-      const msg = (e && e.message) ? e.message : String(e);
-      status && (status.textContent = `Failed: ${msg}`);
-      alert(`Purchase failed:\n${msg}`);
+      // legacy overload (tx, signers?, commitment)
+      sim = await conn.simulateTransaction(signed, undefined, 'processed');
     }
+    console.log('[simulate(after-sign).err]', sim.value.err);
+    console.log('[simulate(after-sign).logs]', sim.value.logs || []);
+    if (sim.value.err) {
+      status && (status.textContent = `Sim failed (after sign)`);
+      alert(
+        `Sim (after sign) failed:\n${JSON.stringify(sim.value.err)}\n\n` +
+        `Logs:\n${(sim.value.logs || []).slice(0, 12).join('\n')}`
+      );
+      return; // stop so you can read the logs
+    }
+
+    status && (status.textContent = "Submitting…");
+    const raw = signed.serialize();
+    const sig = await conn.sendRawTransaction(raw, { skipPreflight: false, maxRetries: 3 });
+    const bh = await conn.getLatestBlockhash("confirmed");
+    await conn.confirmTransaction({ signature: sig, ...bh }, "confirmed");
+
+    status && (status.textContent = `Success! ${sig}`);
+    alert(`Purchase sent ✔\nSignature:\n${sig}`);
+  } catch (e) {
+    console.error(e);
+    const msg = (e && e.message) ? e.message : String(e);
+    status && (status.textContent = `Failed: ${msg}`);
+    alert(`Purchase failed:\n${msg}`);
   }
+}
+
 
   /* ---------- BOOT ---------- */
   window.addEventListener('DOMContentLoaded', () => {
