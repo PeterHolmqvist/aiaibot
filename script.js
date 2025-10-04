@@ -32,7 +32,7 @@
   // SPL Token (original program)
   const TOKEN_PROGRAM_ID = safePk('TOKEN_PROGRAM_ID', "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA");
   // Associated Token Program
-  const ASSOCIATED_TOKEN_PROGRAM_ID = safePk('ASSOCIATED_TOKEN_PROGRAM_ID', "ATokenGPvR93gBfue3DBeQ8Z8CwRk3s8H7RkG4GZLFpR");
+  const ASSOCIATED_TOKEN_PROGRAM_ID = new solanaWeb3.PublicKey("ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL");
 
   const conn = new solanaWeb3.Connection(RPC, "confirmed");
 
@@ -276,7 +276,7 @@ async function purchaseFromUi() {
 
     // Classic SPL IDs (not token-2022)
     const TOKEN_PROGRAM_ID_CANON = new solanaWeb3.PublicKey("TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA");
-    const ATA_PROGRAM_ID_CANON   = new solanaWeb3.PublicKey("ATokenGPvR93gBfue3DBeQ8Z8CwRk3s8H7RkG4GZLFpR");
+    const ATA_PROGRAM_ID_CANON   = ASSOCIATED_TOKEN_PROGRAM_ID;
 
     // Buyer ATA
     const buyerAta = solanaWeb3.PublicKey.findProgramAddressSync(
