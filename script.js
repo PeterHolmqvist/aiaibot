@@ -274,11 +274,11 @@ async function purchaseFromUi() {
     if (!provider.publicKey) await provider.connect();
     const buyer = provider.publicKey;
 
-    // Pin classic SPL program IDs (not token-2022)
+    // Classic SPL IDs (not token-2022)
     const TOKEN_PROGRAM_ID_CANON = new solanaWeb3.PublicKey("TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA");
     const ATA_PROGRAM_ID_CANON   = new solanaWeb3.PublicKey("ATokenGPvR93gBfue3DBeQ8Z8CwRk3s8H7RkG4GZLFpR");
 
-    // Derive buyer ATA using those exact IDs
+    // Buyer ATA
     const buyerAta = solanaWeb3.PublicKey.findProgramAddressSync(
       [buyer.toBuffer(), TOKEN_PROGRAM_ID_CANON.toBuffer(), MINT.toBuffer()],
       ATA_PROGRAM_ID_CANON
@@ -304,21 +304,32 @@ async function purchaseFromUi() {
 
     const ix = new solanaWeb3.TransactionInstruction({ programId: PROGRAM_ID, keys, data });
 
-    const tx = new solanaWeb3.Transaction().add(ix);
-    tx.feePayer = buyer;
-    tx.recentBlockhash = (await conn.getLatestBlockhash("finalized")).blockhash;
+    // -------- send as VERSIONED TX (v0) ----------
+    const { blockhash, lastValidBlockHeight } = await conn.getLatestBlockhash("confirmed");
+    const msg = new solanaWeb3.TransactionMessage({
+      payerKey: buyer,
+      recentBlockhash: blockhash,
+      instructions: [ix],
+    }).compileToV0Message();
 
-    // helpful console view
+    const vtx = new solanaWeb3.VersionedTransaction(msg);
+
     console.table(keys.map((k, i) => ({ i, pubkey: k.pubkey.toBase58(), isSigner: k.isSigner, isWritable: k.isWritable })));
 
     status && (status.textContent = "Requesting signature…");
 
-    // Send via Phantom (this handles signing + send)
-    const { signature } = await provider.signAndSendTransaction(tx);
+    let signature;
+    try {
+      // preferred path
+      ({ signature } = await provider.signAndSendTransaction(vtx));
+    } catch (err) {
+      console.warn('[fallback] signAndSendTransaction failed, trying signTransaction + sendRaw', err);
+      const signed = await provider.signTransaction(vtx);
+      signature = await conn.sendRawTransaction(signed.serialize(), { skipPreflight: false });
+    }
 
     status && (status.textContent = "Submitting…");
-    const bh = await conn.getLatestBlockhash("confirmed");
-    await conn.confirmTransaction({ signature, ...bh }, "confirmed");
+    await conn.confirmTransaction({ signature, blockhash, lastValidBlockHeight }, "confirmed");
 
     status && (status.textContent = `Success! ${signature}`);
     alert(`Purchase sent ✔\nSignature:\n${signature}`);
@@ -329,6 +340,7 @@ async function purchaseFromUi() {
     alert(`Purchase failed:\n${msg}`);
   }
 }
+
 
 
 
