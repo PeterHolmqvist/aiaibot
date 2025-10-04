@@ -15,14 +15,23 @@
   }
 
    /* ---------- CONSTANTS ( devnet ) ---------- */
+/* ---------- CONSTANTS ( devnet ) ---------- */
 const RPC = "https://api.devnet.solana.com";
-const PROGRAM_ID = new solanaWeb3.PublicKey("GKiKsPmSQHGvg5VFXAGy99vmb3JV9BPnqFzC9iwp95Km"); // your deployed devnet program
-const MINT       = new solanaWeb3.PublicKey("9UneRk37ZQppx2wBjekUVaSDVL789MdBMxy8YiRVx848"); // <- NEW devnet mint
+const PROGRAM_ID = new solanaWeb3.PublicKey("GKiKsPmSQHGvg5VFXAGy99vmb3JV9BPnqFzC9iwp95Km");
+const MINT       = new solanaWeb3.PublicKey("9UneRk37ZQppx2wBjekUVaSDVL789MdBMxy8YiRVx848");
 
+// SPL Token (original program)
+const TOKEN_PROGRAM_ID = new solanaWeb3.PublicKey(
+  "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
+);
 
-const ASSOCIATED_TOKEN_PROGRAM_ID = new solanaWeb3.PublicKey("ATokenGPvR93gBfue3DBeQ8Z8CwRk3s8H7RkG4GZLFpR");
+// Associated Token Program
+const ASSOCIATED_TOKEN_PROGRAM_ID = new solanaWeb3.PublicKey(
+  "ATokenGPvR93gBfue3DBeQ8Z8CwRk3s8H7RkG4GZLFpR"
+);
 
 const conn = new solanaWeb3.Connection(RPC, "confirmed");
+
 
 /* ---------- SMALL HELPERS ---------- */
 const $id = (id) => document.getElementById(id);
