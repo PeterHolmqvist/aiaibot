@@ -259,8 +259,7 @@
     )[0];
   };
 
-  /* ---------- PURCHASE (calls on-chain `purchase`) ---------- */
-  /* ---------- PURCHASE (calls on-chain `purchase`) ---------- */
+ /* ---------- PURCHASE (calls on-chain `purchase`) ---------- */
 async function purchaseFromUi() {
   const status = $id('payStatus');
   const input  = $id('amountInput');
@@ -304,45 +303,25 @@ async function purchaseFromUi() {
     ];
 
     const ix = new solanaWeb3.TransactionInstruction({ programId: PROGRAM_ID, keys, data });
+
     const tx = new solanaWeb3.Transaction().add(ix);
     tx.feePayer = buyer;
-    tx.recentBlockhash = (await conn.getLatestBlockhash("confirmed")).blockhash;
+    tx.recentBlockhash = (await conn.getLatestBlockhash("finalized")).blockhash;
 
-    // Quick visibility in console
-    console.table(keys.map((k, i) => ({
-      i, pubkey: k.pubkey.toBase58(), isSigner: k.isSigner, isWritable: k.isWritable
-    })));
+    // helpful console view
+    console.table(keys.map((k, i) => ({ i, pubkey: k.pubkey.toBase58(), isSigner: k.isSigner, isWritable: k.isWritable })));
 
     status && (status.textContent = "Requesting signature…");
-    const signed = await provider.signTransaction(tx);
 
-    // Simulate AFTER signing; support both web3.js overloads
-    let sim;
-    try {
-      sim = await conn.simulateTransaction(signed, { sigVerify: true, commitment: 'processed' });
-    } catch (e) {
-      // legacy overload (tx, signers?, commitment)
-      sim = await conn.simulateTransaction(signed, undefined, 'processed');
-    }
-    console.log('[simulate(after-sign).err]', sim.value.err);
-    console.log('[simulate(after-sign).logs]', sim.value.logs || []);
-    if (sim.value.err) {
-      status && (status.textContent = `Sim failed (after sign)`);
-      alert(
-        `Sim (after sign) failed:\n${JSON.stringify(sim.value.err)}\n\n` +
-        `Logs:\n${(sim.value.logs || []).slice(0, 12).join('\n')}`
-      );
-      return; // stop so you can read the logs
-    }
+    // Send via Phantom (this handles signing + send)
+    const { signature } = await provider.signAndSendTransaction(tx);
 
     status && (status.textContent = "Submitting…");
-    const raw = signed.serialize();
-    const sig = await conn.sendRawTransaction(raw, { skipPreflight: false, maxRetries: 3 });
     const bh = await conn.getLatestBlockhash("confirmed");
-    await conn.confirmTransaction({ signature: sig, ...bh }, "confirmed");
+    await conn.confirmTransaction({ signature, ...bh }, "confirmed");
 
-    status && (status.textContent = `Success! ${sig}`);
-    alert(`Purchase sent ✔\nSignature:\n${sig}`);
+    status && (status.textContent = `Success! ${signature}`);
+    alert(`Purchase sent ✔\nSignature:\n${signature}`);
   } catch (e) {
     console.error(e);
     const msg = (e && e.message) ? e.message : String(e);
@@ -350,6 +329,7 @@ async function purchaseFromUi() {
     alert(`Purchase failed:\n${msg}`);
   }
 }
+
 
 
   /* ---------- BOOT ---------- */
