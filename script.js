@@ -310,6 +310,21 @@ async function purchaseFromUi() {
     const tx = new solanaWeb3.Transaction().add(ix);
     tx.feePayer = buyer;
     tx.recentBlockhash = (await conn.getLatestBlockhash("confirmed")).blockhash;
+    // ---- DEBUG: show what we will send
+console.log('[preflight]', {
+  tokenProgram: TOKEN_PROGRAM_ID_CANON.toBase58(),
+  ataProgram:   ATA_PROGRAM_ID_CANON.toBase58(),
+  buyerAta:     buyerAta.toBase58(),
+});
+console.table(keys.map((k, i) => ({ i, pubkey: k.pubkey.toBase58() })));
+
+// Simulate to get on-chain logs without sending
+const sim = await conn.simulateTransaction(tx, { sigVerify: false, commitment: 'processed' });
+console.log('[simulate.err]', sim.value.err);
+console.log('[simulate.logs]', sim.value.logs);
+if (sim.value.err) {
+  throw new Error('Simulate failed (see logs above).');
+}
 
     status && (status.textContent = "Requesting signature…");
     if (provider.signAndSendTransaction) {
