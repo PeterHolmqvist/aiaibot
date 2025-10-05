@@ -1,10 +1,12 @@
 use anchor_lang::prelude::*;
 use anchor_lang::system_program;
 use anchor_spl::{
-    associated_token::AssociatedToken,
+    // we create the ATA ourselves if it doesn't exist
+    associated_token::{self, AssociatedToken, Create},
     token::{
-        self, FreezeAccount, ThawAccount, Mint, MintTo, Token, TokenAccount,
-        spl_token::state::AccountState,
+        self, FreezeAccount, ThawAccount, Mint, MintTo, Token,
+        // read SPL token account state to know if it's frozen
+        spl_token::state::{Account as RawTokenAccount, AccountState},
     },
 };
 
@@ -68,7 +70,7 @@ pub mod aiai_onchain_v1 {
         Ok(())
     }
 
-    /// Buyer pays SOL; program mints tokens to buyer ATA and freezes it.
+    /// Buyer pays SOL; program mints tokens to buyer ATA and (re)freezes it until TGE.
     pub fn purchase(ctx: Context<Purchase>, amount_lamports: u64) -> Result<()> {
         let sale = &mut ctx.accounts.presale;
 
@@ -105,13 +107,46 @@ pub mod aiai_onchain_v1 {
         let remaining = sale.supply_cap.checked_sub(sale.total_sold).ok_or(PresaleError::MathOverflow)?;
         require!(tokens <= remaining, PresaleError::ExceedsSupplyCap);
 
-        // ----- thaw → mint → (re)freeze (PDA signs) -----
-        let sale_key = sale.key(); // keep binding alive
+        // --------------------------
+        // Ensure buyer ATA exists (create only if missing)
+        // --------------------------
+        let expected_ata = anchor_spl::associated_token::get_associated_token_address(
+            &ctx.accounts.buyer.key(),
+            &ctx.accounts.mint.key(),
+        );
+        require_keys_eq!(ctx.accounts.buyer_ata.key(), expected_ata, PresaleError::Unauthorized);
+
+        let ata_info = ctx.accounts.buyer_ata.to_account_info();
+        if ata_info.data_is_empty() {
+            let cpi_accounts = associated_token::Create {
+                payer: ctx.accounts.buyer.to_account_info(),
+                associated_token: ata_info.clone(),
+                authority: ctx.accounts.buyer.to_account_info(),
+                mint: ctx.accounts.mint.to_account_info(),
+                system_program: ctx.accounts.system_program.to_account_info(),
+                token_program: ctx.accounts.token_program.to_account_info(),
+            };
+            let cpi_ctx = CpiContext::new(
+                ctx.accounts.associated_token_program.to_account_info(),
+                cpi_accounts,
+            );
+            associated_token::create(cpi_ctx)?;
+        }
+
+        // --------------------------
+        // thaw → mint → (re)freeze (PDA signs)
+        // --------------------------
+        let sale_key = sale.key(); // keep binding alive for seeds
         let seeds: &[&[u8]] = &[b"mint-auth", sale_key.as_ref(), &[sale.mint_auth_bump]];
         let signer: &[&[&[u8]]] = &[seeds];
 
-        // If previously frozen, thaw first so we can mint again
-        if ctx.accounts.buyer_ata.state == AccountState::Frozen {
+        // Read SPL token account state to decide if we need to thaw
+        let ata_data_ref = ctx.accounts.buyer_ata.to_account_info().try_borrow_data()?;
+        let raw = RawTokenAccount::unpack(&ata_data_ref)
+            .map_err(|_| error!(PresaleError::Unauthorized))?; // unexpected layout
+        drop(ata_data_ref);
+
+        if raw.state == AccountState::Frozen {
             token::thaw_account(
                 CpiContext::new_with_signer(
                     ctx.accounts.token_program.to_account_info(),
@@ -245,14 +280,10 @@ pub struct Purchase<'info> {
     )]
     pub vault: SystemAccount<'info>,
 
-    /// Buyer ATA (auto-created if missing)
-    #[account(
-        init_if_needed,
-        payer = buyer,
-        associated_token::mint = mint,
-        associated_token::authority = buyer
-    )]
-    pub buyer_ata: Account<'info, TokenAccount>,
+    /// Buyer ATA (we create it in the handler if missing)
+    #[account(mut)]
+    /// CHECK: created on demand via associated_token::create
+    pub buyer_ata: UncheckedAccount<'info>,
 
     pub token_program: Program<'info, Token>,
     pub associated_token_program: Program<'info, AssociatedToken>,
@@ -302,6 +333,7 @@ pub enum PresaleError {
     #[msg("Amount not a multiple of price")] NotMultiple,
     #[msg("Supply cap exceeded")] ExceedsSupplyCap,
 }
+
 
 
 
