@@ -1,13 +1,12 @@
 use anchor_lang::prelude::*;
 use anchor_lang::system_program;
 use anchor_spl::{
-    associated_token::{self, AssociatedToken},
+    associated_token::AssociatedToken,
     token::{
         self, FreezeAccount, ThawAccount, Mint, MintTo, Token, TokenAccount,
         spl_token::state::AccountState,
     },
 };
-
 
 declare_id!("GKiKsPmSQHGvg5VFXAGy99vmb3JV9BPnqFzC9iwp95Km");
 
@@ -106,85 +105,27 @@ pub mod aiai_onchain_v1 {
         let remaining = sale.supply_cap.checked_sub(sale.total_sold).ok_or(PresaleError::MathOverflow)?;
         require!(tokens <= remaining, PresaleError::ExceedsSupplyCap);
 
-        // --------------------------
-        // Ensure buyer ATA exists (create only if missing)
-        // --------------------------
-        let expected_ata = anchor_spl::associated_token::get_associated_token_address(
-            &ctx.accounts.buyer.key(),
-            &ctx.accounts.mint.key(),
-        );
-        require_keys_eq!(ctx.accounts.buyer_ata.key(), expected_ata, PresaleError::Unauthorized);
-
-        let ata_info = ctx.accounts.buyer_ata.to_account_info();
-        if ata_info.data_is_empty() {
-            let cpi_accounts = associated_token::Create {
-                payer: ctx.accounts.buyer.to_account_info(),
-                associated_token: ata_info.clone(),
-                authority: ctx.accounts.buyer.to_account_info(),
-                mint: ctx.accounts.mint.to_account_info(),
-                system_program: ctx.accounts.system_program.to_account_info(),
-                token_program: ctx.accounts.token_program.to_account_info(),
-            };
-            let cpi_ctx = CpiContext::new(
-                ctx.accounts.associated_token_program.to_account_info(),
-                cpi_accounts,
-            );
-            associated_token::create(cpi_ctx)?;
-        }
-
-        // mint + freeze (PDA signs)
+        // ----- thaw → mint → (re)freeze (PDA signs) -----
         let sale_key = sale.key(); // keep binding alive
         let seeds: &[&[u8]] = &[b"mint-auth", sale_key.as_ref(), &[sale.mint_auth_bump]];
         let signer: &[&[&[u8]]] = &[seeds];
-        // mint + (re)freeze logic
-let sale_key = sale.key();
-let seeds: &[&[u8]] = &[b"mint-auth", sale_key.as_ref(), &[sale.mint_auth_bump]];
-let signer: &[&[&[u8]]] = &[seeds];
 
-// If the buyer ATA is frozen (from a previous buy), thaw it so we can mint again.
-if ctx.accounts.buyer_ata.state == AccountState::Frozen {
-    token::thaw_account(
-        CpiContext::new_with_signer(
-            ctx.accounts.token_program.to_account_info(),
-            ThawAccount {
-                account: ctx.accounts.buyer_ata.to_account_info(),
-                mint: ctx.accounts.mint.to_account_info(),
-                authority: ctx.accounts.mint_authority.to_account_info(),
-            },
-            signer,
-        ),
-    )?;
-}
+        // If previously frozen, thaw first so we can mint again
+        if ctx.accounts.buyer_ata.state == AccountState::Frozen {
+            token::thaw_account(
+                CpiContext::new_with_signer(
+                    ctx.accounts.token_program.to_account_info(),
+                    ThawAccount {
+                        account: ctx.accounts.buyer_ata.to_account_info(),
+                        mint: ctx.accounts.mint.to_account_info(),
+                        authority: ctx.accounts.mint_authority.to_account_info(),
+                    },
+                    signer,
+                ),
+            )?;
+        }
 
-// Now mint the new tokens
-token::mint_to(
-    CpiContext::new_with_signer(
-        ctx.accounts.token_program.to_account_info(),
-        MintTo {
-            mint: ctx.accounts.mint.to_account_info(),
-            to: ctx.accounts.buyer_ata.to_account_info(),
-            authority: ctx.accounts.mint_authority.to_account_info(),
-        },
-        signer,
-    ),
-    tokens,
-)?;
-
-// Keep accounts frozen during presale; once TGE is live, leave them thawed
-if !sale.tge_live {
-    token::freeze_account(
-        CpiContext::new_with_signer(
-            ctx.accounts.token_program.to_account_info(),
-            FreezeAccount {
-                account: ctx.accounts.buyer_ata.to_account_info(),
-                mint: ctx.accounts.mint.to_account_info(),
-                authority: ctx.accounts.mint_authority.to_account_info(),
-            },
-            signer,
-        ),
-    )?;
-}
-
+        // Mint
         token::mint_to(
             CpiContext::new_with_signer(
                 ctx.accounts.token_program.to_account_info(),
@@ -198,17 +139,20 @@ if !sale.tge_live {
             tokens,
         )?;
 
-        token::freeze_account(
-            CpiContext::new_with_signer(
-                ctx.accounts.token_program.to_account_info(),
-                FreezeAccount {
-                    account: ctx.accounts.buyer_ata.to_account_info(),
-                    mint: ctx.accounts.mint.to_account_info(),
-                    authority: ctx.accounts.mint_authority.to_account_info(),
-                },
-                signer,
-            ),
-        )?;
+        // Keep locked during presale; once TGE is live, leave thawed
+        if !sale.tge_live {
+            token::freeze_account(
+                CpiContext::new_with_signer(
+                    ctx.accounts.token_program.to_account_info(),
+                    FreezeAccount {
+                        account: ctx.accounts.buyer_ata.to_account_info(),
+                        mint: ctx.accounts.mint.to_account_info(),
+                        authority: ctx.accounts.mint_authority.to_account_info(),
+                    },
+                    signer,
+                ),
+            )?;
+        }
 
         // counters + event
         sale.total_raised = sale.total_raised.checked_add(amount_lamports).ok_or(PresaleError::MathOverflow)?;
@@ -246,8 +190,7 @@ pub struct Initialize<'info> {
         seeds = [b"vault", presale.key().as_ref()],
         bump
     )]
-    /// CHECK: system-owned PDA, no data
-    pub vault: AccountInfo<'info>,   // ← changed from SystemAccount<'info>
+    pub vault: SystemAccount<'info>, // system-owned PDA
 
     /// PDA that must be mint & freeze authority
     #[account(seeds = [b"mint-auth", presale.key().as_ref()], bump)]
@@ -300,13 +243,16 @@ pub struct Purchase<'info> {
         seeds = [b"vault", presale.key().as_ref()],
         bump = presale.vault_bump,
     )]
-    /// CHECK: system account PDA
-    pub vault: AccountInfo<'info>,
+    pub vault: SystemAccount<'info>,
 
-    // Buyer ATA (we create it in the handler if missing)
-    #[account(mut)]
-    /// CHECK: created on demand via associated_token::create
-    pub buyer_ata: UncheckedAccount<'info>,
+    /// Buyer ATA (auto-created if missing)
+    #[account(
+        init_if_needed,
+        payer = buyer,
+        associated_token::mint = mint,
+        associated_token::authority = buyer
+    )]
+    pub buyer_ata: Account<'info, TokenAccount>,
 
     pub token_program: Program<'info, Token>,
     pub associated_token_program: Program<'info, AssociatedToken>,
@@ -356,6 +302,7 @@ pub enum PresaleError {
     #[msg("Amount not a multiple of price")] NotMultiple,
     #[msg("Supply cap exceeded")] ExceedsSupplyCap,
 }
+
 
 
 
