@@ -14,6 +14,9 @@ test-sbf = []
 [dependencies]
 anchor-lang = { version = "=0.30.1", features = ["init-if-needed"] }
 anchor-spl  = "=0.30.1"
+try_from = "0.3"
+try_from_unchecked = "0.1"
+
 
 
 
