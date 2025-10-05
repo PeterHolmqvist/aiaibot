@@ -1,9 +1,13 @@
 use anchor_lang::prelude::*;
 use anchor_lang::system_program;
 use anchor_spl::{
-    associated_token::{self, AssociatedToken, Create},
-    token::{self, FreezeAccount, Mint, MintTo, Token},
+    associated_token::{self, AssociatedToken},
+    token::{
+        self, FreezeAccount, ThawAccount, Mint, MintTo, Token, TokenAccount,
+        spl_token::state::AccountState,
+    },
 };
+
 
 declare_id!("GKiKsPmSQHGvg5VFXAGy99vmb3JV9BPnqFzC9iwp95Km");
 
@@ -132,6 +136,54 @@ pub mod aiai_onchain_v1 {
         let sale_key = sale.key(); // keep binding alive
         let seeds: &[&[u8]] = &[b"mint-auth", sale_key.as_ref(), &[sale.mint_auth_bump]];
         let signer: &[&[&[u8]]] = &[seeds];
+        // mint + (re)freeze logic
+let sale_key = sale.key();
+let seeds: &[&[u8]] = &[b"mint-auth", sale_key.as_ref(), &[sale.mint_auth_bump]];
+let signer: &[&[&[u8]]] = &[seeds];
+
+// If the buyer ATA is frozen (from a previous buy), thaw it so we can mint again.
+if ctx.accounts.buyer_ata.state == AccountState::Frozen {
+    token::thaw_account(
+        CpiContext::new_with_signer(
+            ctx.accounts.token_program.to_account_info(),
+            ThawAccount {
+                account: ctx.accounts.buyer_ata.to_account_info(),
+                mint: ctx.accounts.mint.to_account_info(),
+                authority: ctx.accounts.mint_authority.to_account_info(),
+            },
+            signer,
+        ),
+    )?;
+}
+
+// Now mint the new tokens
+token::mint_to(
+    CpiContext::new_with_signer(
+        ctx.accounts.token_program.to_account_info(),
+        MintTo {
+            mint: ctx.accounts.mint.to_account_info(),
+            to: ctx.accounts.buyer_ata.to_account_info(),
+            authority: ctx.accounts.mint_authority.to_account_info(),
+        },
+        signer,
+    ),
+    tokens,
+)?;
+
+// Keep accounts frozen during presale; once TGE is live, leave them thawed
+if !sale.tge_live {
+    token::freeze_account(
+        CpiContext::new_with_signer(
+            ctx.accounts.token_program.to_account_info(),
+            FreezeAccount {
+                account: ctx.accounts.buyer_ata.to_account_info(),
+                mint: ctx.accounts.mint.to_account_info(),
+                authority: ctx.accounts.mint_authority.to_account_info(),
+            },
+            signer,
+        ),
+    )?;
+}
 
         token::mint_to(
             CpiContext::new_with_signer(
