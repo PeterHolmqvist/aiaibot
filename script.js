@@ -259,6 +259,23 @@
     )[0];
   };
 
+  /* ---------- Balance helper (safe) ---------- */
+/* Uses the SAME classic SPL program IDs and MINT you already defined at top. */
+async function getBuyerTokenBalance(buyerPk) {
+  const ata = solanaWeb3.PublicKey.findProgramAddressSync(
+    [buyerPk.toBuffer(), TOKEN_PROGRAM_ID.toBuffer(), MINT.toBuffer()],
+    ASSOCIATED_TOKEN_PROGRAM_ID
+  )[0];
+
+  const info = await conn.getAccountInfo(ata);
+  if (!info) return { exists: false, ata, balance: 0 };
+
+  const bal = await conn.getTokenAccountBalance(ata);
+  const ui = Number(bal.value?.uiAmountString ?? bal.value?.uiAmount ?? 0);
+  return { exists: true, ata, balance: ui, raw: bal };
+}
+
+
  /* ---------- PURCHASE (calls on-chain `purchase`) ---------- */
 async function purchaseFromUi() {
   const status = $id('payStatus');
