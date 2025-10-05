@@ -6,10 +6,10 @@ resolution = true
 skip-lint = false
 
 [programs.localnet]
-aiai_onchain_v1 = "7Br9YjPsgziRbUxmHxCxjq2fnBM17FzXo8XBwqbikXpi"
+aiai_onchain_v1 = "GKiKsPmSQHGvg5VFXAGy99vmb3JV9BPnqFzC9iwp95Km"  
 
 [programs.devnet]
-aiai_onchain_v1 = "5wUBGHhQ4U4sDK6yLbpivABEoWjpprMDE2YGhmA8jjFA"
+aiai_onchain_v1 = "GKiKsPmSQHGvg5VFXAGy99vmb3JV9BPnqFzC9iwp95Km"
 
 [registry]
 url = "https://api.apr.dev"
